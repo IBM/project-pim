@@ -1,0 +1,6 @@
+flask
+joblib
+pandas
+scikit-learn==1.6.0
+sklearn-pandas
+jupyterlab

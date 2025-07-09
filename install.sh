@@ -5,6 +5,7 @@ touch $HOME/.profile
 
 echo 'PATH=/QOpenSys/pkgs/bin:$PATH' >> $HOME/.profile
 echo 'export PATH' >> $HOME/.profile
+source $HOME/.profile
 
 # Install system dependencies
 yum install -y git \

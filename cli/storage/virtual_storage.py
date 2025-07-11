@@ -1,8 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 
+import cli.utils.common as common
+from cli.storage.storage_exception import StorageError
 import cli.utils.string_util as util
-import cli.storage.storage as storage
+
+logger = common.get_logger("virtual-storage")
 
 def get_vg_payload(physical_vol_name, volume_group):
     return f'''
@@ -40,13 +43,13 @@ def get_vdisk_payload(config, vg_payload):
     payload = str(vg_soup)
     return payload
 
-def get_vdisk_vios_payload(vios_payload, config, hmc_host, partition_uuid, system_uuid):
+def get_vdisk_vios_payload(vios, config, partition_uuid, system_uuid):
     vdisk_mapping = f'''
     <VirtualSCSIMapping schemaVersion="V1_0">
         <Metadata>
             <Atom/>
         </Metadata>
-        <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://{hmc_host}/rest/api/uom/ManagedSystem/{system_uuid}/LogicalPartition/{partition_uuid}" rel="related"/>
+        <AssociatedLogicalPartition kb="CUR" kxe="false" href="https://{util.get_host_address(config)}/rest/api/uom/ManagedSystem/{system_uuid}/LogicalPartition/{partition_uuid}" rel="related"/>
         <Storage kxe="false" kb="CUR">
             <VirtualDisk schemaVersion="V1_0">
                 <Metadata>
@@ -59,29 +62,56 @@ def get_vdisk_vios_payload(vios_payload, config, hmc_host, partition_uuid, syste
         </Storage>
     </VirtualSCSIMapping>
     '''
-    vios_bs = BeautifulSoup(vios_payload, 'xml')
+    soup = BeautifulSoup(vios, 'xml')
     vdisk_bs = BeautifulSoup(vdisk_mapping, 'xml')
-    scsi_mappings = vios_bs.find('VirtualSCSIMappings')
+    scsi_mappings = soup.find('VirtualSCSIMappings')
     scsi_mappings.append(vdisk_bs)
-    payload = str(vios_bs)
-    return payload
+    return str(soup)
 
 def create_volumegroup(config, cookies, vios_uuid):
     uri = f"/rest/api/uom/VirtualIOServer/{vios_uuid}/VolumeGroup"
     hmc_host = util.get_host_address(config)
     url =  "https://" +  hmc_host + uri
     physical_vol_name = util.get_physical_volume_name(config)
-    vg_name = util.get_volume_group(config)
-    payload = get_vg_payload(physical_vol_name, vg_name)
-    headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
-    response = requests.put(url, headers=headers, cookies=cookies, data=payload, verify=False)
+    vg_name = util.get_volume_group_name(config)
+    response = None
 
-    if response.status_code != 200:
-        print("Failed to create volume group", response.text)
-        exit()
-
+    try:
+        payload = get_vg_payload(physical_vol_name, vg_name)
+        headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
+        response = requests.put(url, headers=headers, cookies=cookies, data=payload, verify=False)
+        if response.status_code != 200:
+            logger.error(f"failed to create volume group: '{response.text}'")
+            raise Exception("failed to create volume group")
+    except Exception as e:
+        raise e
     soup = BeautifulSoup(response.text, 'xml')
     vg_id = soup.find('id').text
+    return vg_id
+
+def get_volume_group_id(config, cookies, vios_uuid, vg_name):
+    uri = f"/rest/api/uom/VirtualIOServer/{vios_uuid}/VolumeGroup"
+    hmc_host = util.get_host_address(config)
+    url =  "https://" +  hmc_host + uri
+    headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
+    try:
+        response = requests.get(url, headers=headers, cookies=cookies, verify=False)
+        if response.status_code != 200:
+            logger.error(f"failed to get volume group: '{response.text}'")
+            raise Exception("failed to get volume group")
+    except Exception as e:
+        raise e
+
+    soup = BeautifulSoup(response.text, 'xml')
+    entries = soup.find_all("entry")
+    vg_id = None
+    for entry in entries:
+        vol_group = entry.find("VolumeGroup")
+        if vol_group.find("GroupName").text == vg_name:
+            vg_id = entry.find("id").text
+    if vg_id is None:
+        logger.error(f"failed to find volumegroup id corresponding to volumegroup name {vg_name}")
+        raise StorageError(f"failed to find volumegroup id corresponding to volumegroup name {vg_name}")
     return vg_id
 
 def get_volume_group_details(config, cookies, vios_uuid, vg_id):
@@ -89,11 +119,13 @@ def get_volume_group_details(config, cookies, vios_uuid, vg_id):
     hmc_host = util.get_host_address(config)
     url =  "https://" +  hmc_host + uri
     headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
-    response = requests.get(url, headers=headers, cookies=cookies, verify=False)
-
-    if response.status_code != 200:
-        print("Failed to create volume group", response.text)
-        exit()
+    try:
+        response = requests.get(url, headers=headers, cookies=cookies, verify=False)
+        if response.status_code != 200:
+            logger.error(f"failed to get volume group details: '{response.text}'")
+            raise Exception("failed to get volume group details")
+    except Exception as e:
+        raise e
     soup = BeautifulSoup(response.text, 'xml')
     vol_group_details = str(soup.find("VolumeGroup"))
     return vol_group_details
@@ -106,24 +138,26 @@ def create_virtualdisk(config, cookies, vios_uuid, vg_id):
     hmc_host = util.get_host_address(config)
     url =  "https://" +  hmc_host + uri
     headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
-    payload = get_vdisk_payload(config, vg_details)
-    response = requests.post(url, headers=headers, cookies=cookies, data=payload, verify=False)
-    if response.status_code != 200:
-        print("Failed to create virtual disk", response.text)
-        exit()
-
-    print("Successfully created virtual disk")
+    try:
+        payload = get_vdisk_payload(config, vg_details)
+        response = requests.post(url, headers=headers, cookies=cookies, data=payload, verify=False)
+        if response.status_code != 200:
+            logger.error(f"failed to create virtual disk: {response.text}")
+            raise StorageError(f"failed to create virtual disk")
+    except Exception as e:
+        raise e
+    logger.info("Successfully created virtual disk")
 
 def attach_virtualdisk(vios_payload, config, cookies, partition_uuid, system_uuid, vios_uuid):
     uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/VirtualIOServer/{vios_uuid}"
-    hmc_host = util.get_host_address(config)
-    url =  "https://" +  hmc_host + uri
-    payload = get_vdisk_vios_payload(vios_payload, config, hmc_host, partition_uuid, system_uuid)
-    headers = {"x-api-key": util.get_session_key(config), "Content-Type": storage.CONTENT_TYPE}
-    response = requests.post(url, headers=headers, cookies=cookies, data=payload, verify=False)
-
-    if response.status_code != 200:
-        print("Failed to attach virtual storage to the partition ", response.text)
-        exit()
-
-    print("Successfully attached virtual disk")
+    url =  "https://" +  util.get_host_address(config) + uri
+    payload = get_vdisk_vios_payload(vios_payload, config, partition_uuid, system_uuid)
+    headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=VirtualIOServer"}
+    try:
+        response = requests.post(url, headers=headers, cookies=cookies, data=payload, verify=False)
+        if response.status_code != 200:
+            logger.error(f"failed to attach virtual storage to the partition: {response.text}")
+            raise StorageError(f"failed to attach virtual storage to the partition")
+    except Exception as e:
+        raise e
+    logger.info("Successfully attached virtual disk")

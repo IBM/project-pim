@@ -9,6 +9,7 @@ import cli.partition.activation as activation
 import cli.partition.partition as partition
 from cli.storage.storage_exception import StorageError
 import cli.storage.storage as storage
+import storage.virtual_storage as vstorage
 import cli.storage.vopt_storage as vopt
 import cli.utils.command_util as command_util
 import cli.utils.common as common
@@ -29,12 +30,12 @@ def launch(config_file_path):
         is_config_valid, cookies, sys_uuid, vios_uuid_list = command_util.initialize_command(config)
         if is_config_valid:
             _launch(config, cookies, sys_uuid, vios_uuid_list)
-            logger.info("PIM partition successfully launched")
     except Exception as e:
         logger.error(f"encountered an error: {e}")
     finally:
         if cookies:
             command_util.cleanup(config, cookies)
+        logger.info("Launching PIM partition completed")
 
 def _launch(config, cookies, sys_uuid, vios_uuids):
     try:
@@ -143,11 +144,10 @@ def _launch(config, cookies, sys_uuid, vios_uuids):
                     storage_attached = True
 
         # Enable below code block when virtual disk support is added
-        '''
         use_vdisk = util.use_virtual_disk(config)
         if use_vdisk:
             vios_storage_uuid = vios_storage_list[0][0]
-            updated_vios_payload = get_vios_details(config, cookies, sys_uuid, vios_storage_uuid)
+            updated_vios_payload = vios_operation.get_vios_details(config, cookies, sys_uuid, vios_storage_uuid)
             use_existing_vd = util.use_existing_vd(config)
             if use_existing_vd:
                 vstorage.attach_virtualdisk(updated_vios_payload, config, cookies, partition_uuid, sys_uuid, vios_storage_uuid)
@@ -158,13 +158,11 @@ def _launch(config, cookies, sys_uuid, vios_uuids):
                     # Create volume group
                     vg_id = vstorage.create_volumegroup(config, cookies, vios_storage_uuid)
                 else:
-                    vg_id = get_volume_group(config, cookies, vios_storage_uuid, util.get_volume_group(config))
+                    vg_id = vstorage.get_volume_group_id(config, cookies, vios_storage_uuid, util.get_volume_group_name(config))
                     vstorage.create_virtualdisk(config, cookies, vios_storage_uuid, vg_id)
-                    time.sleep(60)
-                    updated_vios_payload = get_vios_details(config, cookies, sys_uuid, vios_storage_uuid)
+                    updated_vios_payload = vios_operation.get_vios_details(config, cookies, sys_uuid, vios_storage_uuid)
                     vstorage.attach_virtualdisk(updated_vios_payload, config, cookies, partition_uuid, sys_uuid, vios_storage_uuid)
                     diskname = util.get_virtual_disk_name(config)
-        '''
 
         if not storage_attached:
             vios_storage_list = vios_operation.get_vios_with_physical_storage(
@@ -177,21 +175,19 @@ def _launch(config, cookies, sys_uuid, vios_uuids):
             storage.attach_physical_storage(
                 config, cookies, sys_uuid, partition_uuid, vios_storage_list)
 
-
-        lpar_state = activation.check_lpar_status(config, cookies, partition_uuid)
-        if lpar_state != "running":
-            logger.debug("Setting partition bootstring as 'cd/dvd-all'")
-            partition_payload = partition.get_partition_details(
-                config, cookies, sys_uuid, partition_uuid)
-            partition.set_partition_boot_string(
-                config, cookies, sys_uuid, partition_uuid, partition_payload, "cd/dvd-all")
+        partition_payload = partition.get_partition_details(
+            config, cookies, sys_uuid, partition_uuid)
+        logger.debug("Setting partition bootstring as 'cd/dvd-all'")
+        partition.set_partition_boot_string(
+            config, cookies, sys_uuid, partition_uuid, partition_payload, "cd/dvd-all")
 
         logger.info("Activating the partition")
-        activation.activate_partition(config, cookies, partition_uuid)
+        activation.activate_partititon(config, cookies, partition_uuid)
         logger.info("Partition activated")
 
         logger.info("Monitoring boot process, this will take a while")
         monitor_util.monitor_bootstrap_boot(config)
         monitor_util.monitor_pim(config)
-    except (AIAppError, AuthError, NetworkError, PartitionError, StorageError, VIOSError, paramiko.SSHException, Exception) as e:
+    except (AiAppError, AuthError, NetworkError, PartitionError, StorageError, VIOSError, paramiko.SSHException, Exception) as e:
         raise e
+

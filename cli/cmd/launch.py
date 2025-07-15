@@ -144,6 +144,7 @@ def _launch(config, cookies, sys_uuid, vios_uuids):
                     storage_attached = True
 
         # Enable below code block when virtual disk support is added
+        vdisk_attached = False
         use_vdisk = util.use_virtual_disk(config)
         if use_vdisk:
             vios_storage_uuid = vios_storage_list[0][0]
@@ -151,6 +152,7 @@ def _launch(config, cookies, sys_uuid, vios_uuids):
             use_existing_vd = util.use_existing_vd(config)
             if use_existing_vd:
                 vstorage.attach_virtualdisk(updated_vios_payload, config, cookies, partition_uuid, sys_uuid, vios_storage_uuid)
+                vdisk_attached = True
             else:
                 # Create volume group, virtual disk and attach storage
                 use_existing_vg = util.use_existing_vg(config)
@@ -162,9 +164,9 @@ def _launch(config, cookies, sys_uuid, vios_uuids):
                     vstorage.create_virtualdisk(config, cookies, vios_storage_uuid, vg_id)
                     updated_vios_payload = vios_operation.get_vios_details(config, cookies, sys_uuid, vios_storage_uuid)
                     vstorage.attach_virtualdisk(updated_vios_payload, config, cookies, partition_uuid, sys_uuid, vios_storage_uuid)
-                    diskname = util.get_virtual_disk_name(config)
+                    vdisk_attached = True
 
-        if not storage_attached:
+        if not storage_attached or not vdisk_attached:
             vios_storage_list = vios_operation.get_vios_with_physical_storage(
                 config, active_vios_servers)
             if len(vios_storage_list) == 0:

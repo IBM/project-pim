@@ -76,7 +76,7 @@ def check_if_vdisk_attached(vios, partition_uuid):
     try:
         soup = BeautifulSoup(vios, 'xml')
         scsi_mappings = soup.find_all('VirtualSCSIMapping')
-        # Iterate over all SCSI mappings and look for Storage followed by PhysicalVolume XML tags
+        # Iterate over all SCSI mappings and look for Storage followed by VirtualDisk XML tags
         for scsi in scsi_mappings:
             lpar_link = scsi.find("AssociatedLogicalPartition")
             if lpar_link is not None and partition_uuid in lpar_link.attrs["href"]:

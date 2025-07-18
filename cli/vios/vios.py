@@ -4,6 +4,7 @@ import sys
 from bs4 import BeautifulSoup
 
 import cli.storage.storage as storage
+import cli.storage.virtual_storage as vstorage
 import cli.utils.common as common
 import cli.utils.command_util as command_util
 import cli.utils.string_util as util
@@ -160,20 +161,33 @@ def cleanup_vios(config, cookies, sys_uuid, partition_uuid, vios_uuid_list):
             vios = get_vios_details(config, cookies, sys_uuid, vios_uuid)
 
             # remove SCSI mappings from VIOS
-            found, phys_disk = storage.check_if_storage_attached(
+            phys_disk_found, phys_disk = storage.check_if_storage_attached(
                 vios, partition_uuid)
-            if found and not storage_cleaned:
+            if phys_disk_found and not storage_cleaned:
                 logger.info(
                     f"Removing SCSI mapping for physical disk '{phys_disk}'")
                 command_util.remove_scsi_mappings(
                     config, cookies, sys_uuid, partition_uuid, vios_uuid, vios, phys_disk)
                 storage_cleaned = True
+            # Check if attached disk is virtual disk
+            if not phys_disk_found:
+                vdisk_found, vdisk = storage.check_if_vdisk_attached(vios, partition_uuid)
+                if vdisk_found:
+                    logger.info(
+                        f"Removing SCSI mapping for virtual disk '{vdisk}'")
+                    command_util.remove_scsi_mappings(
+                        config, cookies, sys_uuid, partition_uuid, vios_uuid, vios, vdisk)
+                    if not util.use_existing_vd(config):
+                        # delete associated virtual disk
+                        vg_id = get_volume_group(config, cookies, vios_uuid, util.get_volume_group_name(config))
+                        command_util.remove_virtual_disk(config, cookies, vios_uuid, vg_id, vdisk)
+                        logger.info(f"Delete virtualdisk '{vdisk}' associated to partition '{util.get_partition_name(config)}'")
+                    storage_cleaned = True
 
             vios = get_vios_details(config, cookies, sys_uuid, vios_uuid)
             logger.info(f"Removing SCSI mapping for vOPT device '{vopt}'")
             command_util.remove_scsi_mappings(
                 config, cookies, sys_uuid, partition_uuid, vios_uuid, vios, vopt)
-            # TODO: delete virtual disk, volumegroup if created by the script during launch
 
             vios = get_vios_details(config, cookies, sys_uuid, vios_uuid)
 
@@ -189,13 +203,26 @@ def cleanup_vios(config, cookies, sys_uuid, partition_uuid, vios_uuid_list):
                 if vios_uuid not in processed_vios_list:
                     vios = get_vios_details(
                         config, cookies, sys_uuid, vios_uuid)
-                    found, phys_disk = storage.check_if_storage_attached(
+                    phys_disk_found, phys_disk = storage.check_if_storage_attached(
                         vios, partition_uuid)
-                    if found:
+                    if phys_disk_found:
                         logger.debug(
                             f"Removing SCSI mapping for physical disk '{phys_disk}'")
                         command_util.remove_scsi_mappings(
                             config, cookies, sys_uuid, partition_uuid, vios_uuid, vios, phys_disk)
+                    # Check if attached disk is virtual disk
+                    if not phys_disk_found:
+                        vdisk_found, vdisk = storage.check_if_vdisk_attached(vios, partition_uuid)
+                        if vdisk_found:
+                            logger.info(
+                                f"Removing SCSI mapping for virtual disk '{vdisk}'")
+                            command_util.remove_scsi_mappings(
+                                config, cookies, sys_uuid, partition_uuid, vios_uuid, vios, vdisk)
+                            # delete associated virtual disk
+                        vg_id = get_volume_group(config, cookies, vios_uuid, util.get_volume_group_name(config))
+                        command_util.remove_virtual_disk(config, cookies, vios_uuid, vg_id, vdisk)
+                        logger.info(
+                            f"Delete virtualdisk '{vdisk}' associated to partition '{util.get_partition_name(config)}'")
     except Exception as e:
         logger.error(f"failed to clean up VIOS, error: {e}")
 

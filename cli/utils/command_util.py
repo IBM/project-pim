@@ -76,6 +76,43 @@ def remove_vopt_device(config, cookies, vios, vopt_name):
         raise e
     return
 
+
+def remove_virtual_disk(config, cookies, vios_uuid, vg_id, vdisk):
+    try:
+        url = f"https://{util.get_host_address(config)}/rest/api/uom/VirtualIOServer/{vios_uuid}/VolumeGroup/{vg_id}"
+        headers = {"x-api-key": util.get_session_key(
+            config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
+        response = requests.get(url, headers=headers,
+                                cookies=cookies, verify=False)
+        if response.status_code != 200:
+            logger.error(
+                f"failed to get volumegroup details, error: {response.text}")
+            raise Exception(
+                f"failed to get volumegroup details, error: {response.text}")
+        soup = BeautifulSoup(response.text, 'xml')
+
+        # remove virtual disk
+        vdisks = soup.find_all("VirtualDisk")
+        for disk in vdisks:
+            if disk.find("DiskName", string=vdisk) is not None:
+                disk.decompose()
+
+        headers = {"x-api-key": util.get_session_key(
+            config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
+        response = requests.post(url, data=str(soup),
+            headers=headers, cookies=cookies, verify=False)
+        if response.status_code != 200:
+            logger.error(
+                f"failed to update volume group after deleting virtual disk, error: {response.text}")
+            return
+
+        logger.debug(
+            f"Virtualdisk '{vdisk}' has been deleted successfully")
+    except Exception as e:
+        raise e
+    return
+
+
 def check_if_scsi_mapping_exist(partition_uuid, vios, media_dev_name):
     found = False
     vscsi = None

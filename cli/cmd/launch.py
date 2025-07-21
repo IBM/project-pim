@@ -178,7 +178,7 @@ def _launch(config, cookies, sys_uuid, vios_uuids):
                     vstorage.attach_virtualdisk(updated_vios_payload, config, cookies, partition_uuid, sys_uuid, vios_storage_uuid)
                     vdisk_attached = True
 
-        if not storage_attached or not vdisk_attached:
+        if not storage_attached and not vdisk_attached:
             vios_storage_list = vios_operation.get_vios_with_physical_storage(
                 config, active_vios_servers)
             if len(vios_storage_list) == 0:

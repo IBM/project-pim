@@ -94,12 +94,15 @@ def remove_virtual_disk(config, cookies, vios_uuid, vg_id, vdisk):
         # remove virtual disk
         vdisks = soup.find_all("VirtualDisk")
         for disk in vdisks:
-            if disk.find("DiskName", string=vdisk) is not None:
+            disk_name = disk.find("DiskName")
+            if disk_name is not None and disk_name.text == vdisk:
                 disk.decompose()
 
+        # Get VolumeGroup XML payload after dropping virtualdisk
+        vg = soup.find("VolumeGroup")
         headers = {"x-api-key": util.get_session_key(
             config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
-        response = requests.post(url, data=str(soup),
+        response = requests.post(url, data=str(vg),
             headers=headers, cookies=cookies, verify=False)
         if response.status_code != 200:
             logger.error(

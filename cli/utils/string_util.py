@@ -119,13 +119,13 @@ def get_virtual_disk_name(config):
     return config["partition"]["storage"]["vdisk_name"]
 
 def use_virtual_disk(config):
-     return config["partition"]["storage"]["use_virtual_disk"]
+    return config["partition"]["storage"].as_bool("use_virtual_disk")
 
 def use_existing_vd(config):
-     return config["partition"]["storage"]["use_existing_vd"]
+    return config["partition"]["storage"].as_bool("use_existing_vd")
 
 def use_existing_vg(config):
-    return config["partition"]["storage"]["use_existing_vg"]
+    return config["partition"]["storage"].as_bool("use_existing_vg")
 
 def get_virtual_disk_size(config):
     return config["partition"]["storage"]["vdisk_size"]

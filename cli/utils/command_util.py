@@ -79,9 +79,9 @@ def remove_vopt_device(config, cookies, vios, vopt_name):
     return
 
 
-def remove_virtual_disk(config, cookies, vios_uuid, vg_id, vdisk):
+def remove_virtual_disk(config, cookies, vios_uuid, vg_id, vdisk_name):
     try:
-        found, vdisk, vg = vstorage.check_if_vdisk_exists(config, cookies, vios_uuid, vdisk)
+        found, vdisk, vg = vstorage.check_if_vdisk_exists(config, cookies, vios_uuid, vg_id, vdisk_name)
         if not found:
             logger.debug(f"No virtualdisk '{vdisk}' is found under volumegroup")
             return
@@ -101,7 +101,7 @@ def remove_virtual_disk(config, cookies, vios_uuid, vg_id, vdisk):
             return
 
         logger.debug(
-            f"Virtualdisk '{vdisk}' has been deleted successfully")
+            f"Virtualdisk '{vdisk_name}' has been deleted successfully")
     except Exception as e:
         raise e
     return

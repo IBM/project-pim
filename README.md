@@ -24,7 +24,7 @@ To get started, you can follow steps below to build and deploy a simple entity e
     - ***vLLM:***
         - Open source [vLLM](https://github.com/vllm-project/vllm) application can be used.
     - ***Entity Extraction App:***
-        - A sample entity extraction application is provided [here](examples/simple-entity-extraction/app/entity.py) that uses the OpenAI API to call the `/chat/completion` API to do entity extraction.
+        - A sample entity extraction application is provided [here](examples/simple-entity-extraction/app/entity.py) that uses the OpenAI `/chat/completion` API to do entity extraction.
 - **Step 2: Containerize the application**
     - ***vLLM:***
         - Follow the instructions in the [README](examples/vllm/app/README.md) to build the vLLM application's container image. It has a script that pulls open-source vLLM code base and builds a container image.
@@ -41,7 +41,7 @@ To get started, you can follow steps below to build and deploy a simple entity e
 - **Step 1: Set up PIM**
     - You can follow the steps to set up PIM on your IBMi/Linux machine given [here](docs/deployer-guide.md#installation).
 - **Step 2: Configure your AI partition**
-    - Read through this [guide](docs/configuration-guide.md) and fill appropriate values.
+    - Read through this [guide](docs/configuration-guide.md) and fill appropriate values in [config.ini](config.ini).
     - Use final image built on builder step 4 in `ai.image` field.
 - **Step 3: Run the Launch Command**
 ```shell

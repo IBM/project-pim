@@ -1,5 +1,6 @@
-# PIM Configuration
+# PIM Configuration Guide
 PIM configs have major sections like system, ai and partition. Each of these sections is covered in detail below.
+Configuration should be filled in a file callled [config.ini](../config.ini). In case of multiple AI usecase deployment, different copy of `config.ini` with unique `partition.name` values can be passed via `--config` flag of cli utility.
 
 ## System
 - name: Name of the P10/P11 host, can be found from HMC console

@@ -1,6 +1,6 @@
 # Custom Examples
 
-Examples that utilises PIM base image built [here](https://github.ibm.com/project-pim/base-images) to showcase various use cases that can be built on PIM 
+Examples that utilises PIM base image built [here](../base-image/) to build various AI use cases on top of it. 
 
 ### Structure
 All the custom examples contains following files
@@ -10,7 +10,7 @@ All the custom examples contains following files
 ```Dockerfile
 FROM <REGISTRY>/pim/base
 ```
-Base Image built from [here](https://github.ibm.com/project-pim/base-images) 
+Base Image built from [here](../base-image/)
 ```Dockerfile
 COPY vllm.container /usr/share/containers/systemd
 ```

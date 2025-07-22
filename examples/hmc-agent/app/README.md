@@ -1,7 +1,7 @@
 # AI agent to manage Power Infra using MCP Server built for HMC 
 
 # Setup
-1. Clone this repository `git clone https://github.ibm.com/project-pim/infra-agents` and go into it `cd infra-agents`
+1. Clone this repository `git clone https://github.com/IBM/project-pim` and get into `examples/hmc-agent/app`
 2. Create a virtual environment `uv venv` and activate it `source .venv/bin/activate`
 3. Install the dependencies `uv sync`
 Note: Make sure npm/nodejs dependency is installed to use `uv` functionalities 

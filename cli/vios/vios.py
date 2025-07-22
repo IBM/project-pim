@@ -144,6 +144,36 @@ def get_volume_group(config, cookies, vios_uuid, vg_name):
     vg_id = vol_group.find("AtomID").text
     return vg_id
 
+def cleanup_logical_volume(config, cookies, vios, vios_uuid, sys_uuid, partition_uuid):
+    vdisk_found, vdisk = vstorage.check_if_vdisk_attached(vios, partition_uuid)
+    if vdisk_found:
+        logger.info(
+            f"Removing SCSI mapping for virtual disk '{vdisk}'")
+        command_util.remove_scsi_mappings(
+            config, cookies, sys_uuid, partition_uuid, vios_uuid, vios, vdisk)
+
+    # delete associated virtual disk
+    vg_id = get_volume_group(config, cookies, vios_uuid, util.get_volume_group_name(config))
+    command_util.remove_virtual_disk(config, cookies, vios_uuid, vg_id, util.get_virtual_disk_name(config))
+    logger.info(f"Deleted virtualdisk '{util.get_virtual_disk_name(config)}' associated to partition '{util.get_partition_name(config)}'")
+    return
+
+def cleanup_storage(config, cookies, vios, vios_uuid, sys_uuid, partition_uuid):
+    storage_cleaned = False
+     # remove SCSI mappings from VIOS
+    phys_disk_found, phys_disk = storage.check_if_storage_attached(
+        vios, partition_uuid)
+    if phys_disk_found and not storage_cleaned:
+        logger.info(
+            f"Removing SCSI mapping for physical disk '{phys_disk}'")
+        command_util.remove_scsi_mappings(
+            config, cookies, sys_uuid, partition_uuid, vios_uuid, vios, phys_disk)
+        storage_cleaned = True
+    # Check if attached disk is virtual disk
+    if not phys_disk_found and not storage_cleaned:
+        cleanup_logical_volume(config, cookies, vios, vios_uuid, sys_uuid, partition_uuid)
+        storage_cleaned = True
+    return storage_cleaned
 
 def cleanup_vios(config, cookies, sys_uuid, partition_uuid, vios_uuid_list):
     vopt_list = [util.get_bootstrap_iso(
@@ -160,30 +190,7 @@ def cleanup_vios(config, cookies, sys_uuid, partition_uuid, vios_uuid_list):
                 continue
             vios = get_vios_details(config, cookies, sys_uuid, vios_uuid)
 
-            # remove SCSI mappings from VIOS
-            phys_disk_found, phys_disk = storage.check_if_storage_attached(
-                vios, partition_uuid)
-            if phys_disk_found and not storage_cleaned:
-                logger.info(
-                    f"Removing SCSI mapping for physical disk '{phys_disk}'")
-                command_util.remove_scsi_mappings(
-                    config, cookies, sys_uuid, partition_uuid, vios_uuid, vios, phys_disk)
-                storage_cleaned = True
-            # Check if attached disk is virtual disk
-            if not phys_disk_found:
-                vdisk_found, vdisk = vstorage.check_if_vdisk_attached(vios, partition_uuid)
-                if vdisk_found:
-                    logger.info(
-                        f"Removing SCSI mapping for virtual disk '{vdisk}'")
-                    command_util.remove_scsi_mappings(
-                        config, cookies, sys_uuid, partition_uuid, vios_uuid, vios, vdisk)
-
-                # delete associated virtual disk
-                vg_id = get_volume_group(config, cookies, vios_uuid, util.get_volume_group_name(config))
-                command_util.remove_virtual_disk(config, cookies, vios_uuid, vg_id, util.get_virtual_disk_name(config))
-                logger.info(f"Deleted virtualdisk '{util.get_virtual_disk_name(config)}' associated to partition '{util.get_partition_name(config)}'")
-                storage_cleaned = True
-
+            storage_cleaned = cleanup_storage(config, cookies, vios, vios_uuid, sys_uuid, partition_uuid)
             vios = get_vios_details(config, cookies, sys_uuid, vios_uuid)
             logger.info(f"Removing SCSI mapping for vOPT device '{vopt}'")
             command_util.remove_scsi_mappings(
@@ -201,28 +208,8 @@ def cleanup_vios(config, cookies, sys_uuid, partition_uuid, vios_uuid_list):
         if not storage_cleaned:
             for vios_uuid in vios_uuid_list:
                 if vios_uuid not in processed_vios_list:
-                    vios = get_vios_details(
-                        config, cookies, sys_uuid, vios_uuid)
-                    phys_disk_found, phys_disk = storage.check_if_storage_attached(
-                        vios, partition_uuid)
-                    if phys_disk_found:
-                        logger.debug(
-                            f"Removing SCSI mapping for physical disk '{phys_disk}'")
-                        command_util.remove_scsi_mappings(
-                            config, cookies, sys_uuid, partition_uuid, vios_uuid, vios, phys_disk)
-                    # Check if attached disk is virtual disk
-                    if not phys_disk_found:
-                        vdisk_found, vdisk = vstorage.check_if_vdisk_attached(vios, partition_uuid)
-                        if vdisk_found:
-                            logger.info(
-                                f"Removing SCSI mapping for virtual disk '{vdisk}'")
-                            command_util.remove_scsi_mappings(
-                                config, cookies, sys_uuid, partition_uuid, vios_uuid, vios, vdisk)
-                        # delete associated virtual disk
-                        vg_id = get_volume_group(config, cookies, vios_uuid, util.get_volume_group_name(config))
-                        command_util.remove_virtual_disk(config, cookies, vios_uuid, vg_id, util.get_virtual_disk_name(config))
-                        logger.info(
-                            f"Delete virtualdisk '{util.get_virtual_disk_name(config)}' associated to partition '{util.get_partition_name(config)}'")
+                    vios = get_vios_details(config, cookies, sys_uuid, vios_uuid)
+                    _ = cleanup_storage(config, cookies, vios, vios_uuid, sys_uuid, partition_uuid)
     except Exception as e:
         logger.error(f"failed to clean up VIOS, error: {e}")
 

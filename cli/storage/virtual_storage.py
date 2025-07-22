@@ -68,27 +68,6 @@ def get_vdisk_vios_payload(vios, config, partition_uuid, system_uuid):
     scsi_mappings.append(vdisk_bs)
     return str(soup)
 
-def create_volumegroup(config, cookies, vios_uuid):
-    uri = f"/rest/api/uom/VirtualIOServer/{vios_uuid}/VolumeGroup"
-    hmc_host = util.get_host_address(config)
-    url =  "https://" +  hmc_host + uri
-    physical_vol_name = util.get_physical_volume_name(config)
-    vg_name = util.get_volume_group_name(config)
-    response = None
-
-    try:
-        payload = get_vg_payload(physical_vol_name, vg_name)
-        headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
-        response = requests.put(url, headers=headers, cookies=cookies, data=payload, verify=False)
-        if response.status_code != 200:
-            logger.error(f"failed to create volume group: '{response.text}'")
-            raise Exception("failed to create volume group")
-    except Exception as e:
-        raise e
-    soup = BeautifulSoup(response.text, 'xml')
-    vg_id = soup.find('id').text
-    return vg_id
-
 def get_volume_group_id(config, cookies, vios_uuid, vg_name):
     uri = f"/rest/api/uom/VirtualIOServer/{vios_uuid}/VolumeGroup"
     hmc_host = util.get_host_address(config)

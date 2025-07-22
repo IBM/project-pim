@@ -113,22 +113,16 @@ def get_ssh_pub_key(config):
 
 # storage related Getters
 def get_volume_group_name(config):
-    return config["partition"]["storage"]["vg_name"]
+    return config["virtual-disk"]["vg_name"]
 
 def get_virtual_disk_name(config):
-    return config["partition"]["storage"]["vdisk_name"]
+    return config["virtual-disk"]["vdisk_name"]
 
-def use_virtual_disk(config):
-    return config["partition"]["storage"].as_bool("use_virtual_disk")
-
-def use_existing_vd(config):
-    return config["partition"]["storage"].as_bool("use_existing_vd")
-
-def use_existing_vg(config):
-    return config["partition"]["storage"].as_bool("use_existing_vg")
+def use_physical_volume(config):
+    return config["partition"]["storage"].as_bool("use_physical_volume")
 
 def get_virtual_disk_size(config):
-    return config["partition"]["storage"]["vdisk_size"]
+    return config["virtual-disk"]["vdisk_size"]
 
 def get_required_disk_size(config):
     return config["partition"]["storage"]["size"]

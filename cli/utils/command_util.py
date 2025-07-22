@@ -3,12 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 
 import cli.auth.auth as auth
+import cli.storage.storage as storage
+import cli.storage.virtual_storage as vstorage
 import cli.utils.common as common
 import cli.utils.validator as validator
 import cli.utils.string_util as util
 import cli.utils.iso_util as iso_util
 import cli.vios.vios as vios_operation
-import cli.storage.storage as storage
+
 
 logger = common.get_logger("command-util")
 
@@ -79,27 +81,16 @@ def remove_vopt_device(config, cookies, vios, vopt_name):
 
 def remove_virtual_disk(config, cookies, vios_uuid, vg_id, vdisk):
     try:
-        url = f"https://{util.get_host_address(config)}/rest/api/uom/VirtualIOServer/{vios_uuid}/VolumeGroup/{vg_id}"
-        headers = {"x-api-key": util.get_session_key(
-            config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
-        response = requests.get(url, headers=headers,
-                                cookies=cookies, verify=False)
-        if response.status_code != 200:
-            logger.error(
-                f"failed to get volumegroup details, error: {response.text}")
-            raise Exception(
-                f"failed to get volumegroup details, error: {response.text}")
-        soup = BeautifulSoup(response.text, 'xml')
+        found, vdisk, vg = vstorage.check_if_vdisk_exists(config, cookies, vios_uuid, vdisk)
+        if not found:
+            logger.debug(f"No virtualdisk '{vdisk}' is found under volumegroup")
+            return
+        # drop virtualdisk xml block
+        vdisk.decompose()
 
-        # remove virtual disk
-        vdisks = soup.find_all("VirtualDisk")
-        for disk in vdisks:
-            disk_name = disk.find("DiskName")
-            if disk_name is not None and disk_name.text == vdisk:
-                disk.decompose()
-
-        # Get VolumeGroup XML payload after dropping virtualdisk
-        vg = soup.find("VolumeGroup")
+        uri = f"/rest/api/uom/VirtualIOServer/{vios_uuid}/VolumeGroup/{vg_id}"
+        hmc_host = util.get_host_address(config)
+        url =  "https://" +  hmc_host + uri
         headers = {"x-api-key": util.get_session_key(
             config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
         response = requests.post(url, data=str(vg),

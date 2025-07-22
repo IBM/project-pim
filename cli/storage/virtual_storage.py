@@ -130,6 +130,64 @@ def get_volume_group_details(config, cookies, vios_uuid, vg_id):
     vol_group_details = str(soup.find("VolumeGroup"))
     return vol_group_details
 
+def check_if_vdisk_attached(vios, partition_uuid):
+    found = False
+    vdisk = ""
+    if partition_uuid == "":
+        return found, vdisk
+
+    try:
+        soup = BeautifulSoup(vios, 'xml')
+        scsi_mappings = soup.find_all('VirtualSCSIMapping')
+        # Iterate over all SCSI mappings and look for Storage followed by VirtualDisk XML tags
+        for scsi in scsi_mappings:
+            lpar_link = scsi.find("AssociatedLogicalPartition")
+            if lpar_link is not None and partition_uuid in lpar_link.attrs["href"]:
+                storage = scsi.find("Storage")
+                if storage is not None:
+                    logical_vol = storage.find("VirtualDisk")
+                    if logical_vol is not None:
+                        logger.debug(
+                            f"Found virtual disk SCSI mapping for partition '{partition_uuid}' in VIOS")
+                        found = True
+                        vdisk = logical_vol.find("DiskName").text
+                        break
+    except Exception as e:
+        logger.error(
+            "failed to check if storage SCSI mapping is present in VIOS")
+        raise e
+    return found, vdisk
+
+# Checks if virtualdisk is created under a given volumegroup
+def check_if_vdisk_exists(config, cookies, vios_uuid, vg_id, vdisk):
+    try:
+        url = f"https://{util.get_host_address(config)}/rest/api/uom/VirtualIOServer/{vios_uuid}/VolumeGroup/{vg_id}"
+        headers = {"x-api-key": util.get_session_key(
+            config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
+        response = requests.get(url, headers=headers,
+                                cookies=cookies, verify=False)
+        if response.status_code != 200:
+            logger.error(
+                f"failed to get volumegroup details, error: {response.text}")
+            raise Exception(
+                f"failed to get volumegroup details, error: {response.text}")
+        soup = BeautifulSoup(response.text, 'xml')
+
+        # remove virtual disk
+        volume_group = soup.find("VolumeGroup")
+        vdisks = soup.find_all("VirtualDisk")
+        present = False
+        virt_disk_xml = None
+        for disk in vdisks:
+            disk_name = disk.find("DiskName")
+            if disk_name is not None and disk_name.text == vdisk:
+                present = True
+                virt_disk_xml = disk
+                break
+    except Exception as e:
+        raise e
+    return present, virt_disk_xml, volume_group
+
 def create_virtualdisk(config, cookies, vios_uuid, vg_id):
     # Get Volume group details
     vg_details = get_volume_group_details(config, cookies, vios_uuid, vg_id)

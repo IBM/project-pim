@@ -209,5 +209,5 @@ def handle_virtual_disk(config, cookies, active_vios, sys_uuid, lpar_id):
         vstorage.attach_virtualdisk(updated_vios_payload, config, cookies, lpar_id, sys_uuid, vios_storage_uuid)
     except (StorageError, VIOSError, Exception) as e:
         raise e
-    logger.info(f"virtualdisk is attached to parition '{lpar_id}' successfully")
+    logger.info(f"virtualdisk is attached to partition '{lpar_id}' successfully")
     return

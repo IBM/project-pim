@@ -89,8 +89,8 @@ def get_volume_group_id(config, cookies, vios_uuid, vg_name):
         if vol_group.find("GroupName").text == vg_name:
             vg_id = entry.find("id").text
     if vg_id is None:
-        logger.error(f"failed to find volumegroup id corresponding to volumegroup name {vg_name}")
-        raise StorageError(f"failed to find volumegroup id corresponding to volumegroup name {vg_name}")
+        logger.error(f"failed to find volumegroup id corresponding to volumegroup name '{vg_name}'")
+        raise StorageError(f"failed to find volumegroup id corresponding to volumegroup name '{vg_name}'")
     return vg_id
 
 def get_volume_group_details(config, cookies, vios_uuid, vg_id):
@@ -147,9 +147,9 @@ def check_if_vdisk_exists(config, cookies, vios_uuid, vg_id, vdisk):
                                 cookies=cookies, verify=False)
         if response.status_code != 200:
             logger.error(
-                f"failed to get volumegroup details, error: {response.text}")
+                f"failed to get volumegroup details, error: '{response.text}'")
             raise Exception(
-                f"failed to get volumegroup details, error: {response.text}")
+                f"failed to get volumegroup details, error: '{response.text}'")
         soup = BeautifulSoup(response.text, 'xml')
 
         # remove virtual disk
@@ -179,7 +179,7 @@ def create_virtualdisk(config, cookies, vios_uuid, vg_id):
         payload = get_vdisk_payload(config, vg_details)
         response = requests.post(url, headers=headers, cookies=cookies, data=payload, verify=False)
         if response.status_code != 200:
-            logger.error(f"failed to create virtual disk: {response.text}")
+            logger.error(f"failed to create virtual disk: '{response.text}'")
             raise StorageError(f"failed to create virtual disk")
     except Exception as e:
         raise e
@@ -193,7 +193,7 @@ def attach_virtualdisk(vios_payload, config, cookies, partition_uuid, system_uui
     try:
         response = requests.post(url, headers=headers, cookies=cookies, data=payload, verify=False)
         if response.status_code != 200:
-            logger.error(f"failed to attach virtual storage to the partition: {response.text}")
+            logger.error(f"failed to attach virtual storage to the partition: '{response.text}'")
             raise StorageError(f"failed to attach virtual storage to the partition")
     except Exception as e:
         raise e

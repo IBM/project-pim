@@ -97,7 +97,7 @@ def remove_virtual_disk(config, cookies, vios_uuid, vg_id, vdisk_name):
             headers=headers, cookies=cookies, verify=False)
         if response.status_code != 200:
             logger.error(
-                f"failed to update volume group after deleting virtual disk, error: {response.text}")
+                f"failed to update volume group after deleting virtual disk, error: '{response.text}'")
             return
 
         logger.debug(

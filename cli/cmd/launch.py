@@ -171,7 +171,7 @@ def setup_storage(config, cookies, active_vios, sys_uuid, lpar_id):
                     storage_attached = True
 
         vdisk_attached = False
-        if not util.use_logical_volume(config) and not storage_attached:
+        if util.use_logical_volume(config) and not storage_attached:
             handle_virtual_disk(config, cookies, active_vios, sys_uuid, lpar_id)
             vdisk_attached = True
 

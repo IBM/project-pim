@@ -119,7 +119,7 @@ def get_virtual_disk_name(config):
     return config["virtual-disk"]["vdisk_name"]
 
 def use_logical_volume(config):
-    return config["virtual-disk"].as_bool("use_physical_volume")
+    return config["virtual-disk"].as_bool("use_logical_volume")
 
 def get_virtual_disk_size(config):
     return config["virtual-disk"]["vdisk_size"]

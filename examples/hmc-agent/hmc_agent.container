@@ -1,0 +1,18 @@
+[Unit]
+Description=Run simple HMC AI agent application
+Requires=vllm.service
+After=vllm.service
+
+[Service]
+Restart=on-failure
+RestartSec=60
+EnvironmentFile=/etc/pim/env.conf
+
+[Container]
+Image=na.artifactory.swg-devops.com/sys-pcloud-docker-local/devops/pim/hmc-agent
+Network=host
+SecurityLabelType=unconfined_t
+AutoUpdate=registry
+
+[Install]
+WantedBy=multi-user.target default.target

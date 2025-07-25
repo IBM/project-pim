@@ -5,7 +5,7 @@ from langchain_core.messages import AIMessage
 import asyncio
 
 class MCPClient:
-    def __init__(self, mcp_server_url="http://127.0.0.1:8000/sse"):
+    def __init__(self, mcp_server_url="http://127.0.0.1:8003/sse"):
         self.model = ChatOpenAI(
             model="ibm-granite/granite-3.2-8b-instruct",
             openai_api_base="",

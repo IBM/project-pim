@@ -10,6 +10,7 @@ import cli.partition.activation as activation
 import cli.partition.partition as partition
 import cli.utils.common as common
 import cli.utils.command_util as command_util
+import cli.utils.string_util as util
 import cli.vios.vios as vios_operation
 
 from cli.utils.string_util import *
@@ -40,6 +41,10 @@ def generate_cloud_init_iso_config(config, slot_num, config_dir):
     # 'workloadImage' is being used inside the bootstrap iso to write the bootc image into disk, in case of modification of this field name, needs same modification in bootstrap.iso too.
     pim_config_json["workloadImage"] = get_workload_image(config)
 
+    pim_config_json["HMC_IP"] = util.get_host_address(config)
+    pim_config_json["HMC_USERNAME"] = util.get_host_username(config)
+    pim_config_json["HMC_PASSWORD"] = util.get_host_password(config)
+
     pim_config_file = open(config_dir + "/pim_config.json", "w")
     pim_config_file.write(json.dumps(pim_config_json))
 
@@ -50,6 +55,7 @@ def generate_cloud_init_iso_config(config, slot_num, config_dir):
     auth_json = "{}" if config["ai"]["auth-json"] == "" else config["ai"]["auth-json"]
     auth_config_file = open(config_dir + "/auth.json", "w")
     auth_config_file.write(auth_json)
+
     logger.debug("Generated config files for the cloud-init ISO")
 
 

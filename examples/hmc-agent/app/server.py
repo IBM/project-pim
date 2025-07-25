@@ -7,7 +7,7 @@ import hmc
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Create server 
-mcp = FastMCP("ibmhmcserver")
+mcp = FastMCP("ibmhmcserver", host="127.0.0.1", port=8003)
 
 # Add hmc version retriever tool
 @mcp.tool()

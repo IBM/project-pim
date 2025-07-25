@@ -9,10 +9,11 @@ ENV PATH=${VIRTUAL_ENV}/bin:$PATH
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64:/usr/local/lib:/usr/lib64:/usr/lib
 
-ENV HMC_IP="" \
-IP="" \
-PASSWORD="" \
-OLLAMA_MODEL="ollama_chat/granite3.2:8b"
+# below env variables are populated in /etc/pim/hmc_agent.conf
+ENV HMC_IP=${HMC_IP}
+ENV HMC_USERNAME=${HMC_USERNAME}
+ENV HMC_PASSWORD=${HMC_PASSWORD}
+ENV OLLAMA_MODEL=${OLLAMA_MODEL}
 
 RUN microdnf install -y  \
     dnf install -y https://mirror.stream.centos.org/9-stream/BaseOS/`arch`/os/Packages/centos-gpg-keys-9.0-24.el9.noarch.rpm \

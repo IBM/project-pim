@@ -3,13 +3,14 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import AIMessage
 import asyncio
+import os
 
 class MCPClient:
-    def __init__(self, mcp_server_url="http://127.0.0.1:8003/sse"):
+    def __init__(self, openai_base_url, model, mcp_server_url="http://127.0.0.1:8003/sse"):
         self.model = ChatOpenAI(
-            model="ibm-granite/granite-3.2-8b-instruct",
-            openai_api_base="",
-            openai_api_key="",
+            model=model,
+            openai_api_base=openai_base_url,
+            openai_api_key="xyz abcd",
             temperature=0.6,
             streaming=False  # Disable streaming for better compatibility
         )
@@ -54,7 +55,9 @@ class MCPClient:
 
 async def main():
     try:
-        client = MCPClient()
+        model = os.getenv("OLLAMA_MODEL")
+        openai_base_url = os.getenv("OPEN_AI_BASE_URL")
+        client = MCPClient(model, openai_base_url)
         print("\nInitializing agent...")
         await client.initialize_agent()
         

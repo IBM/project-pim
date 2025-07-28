@@ -122,7 +122,7 @@ def get_logical_partitions(system_name):
 
     return filtered_partition
 
-def paritition_stats(lpar_name, system_name):
+def partition_stats(lpar_name, system_name):
     partitions = get_logical_partitions(system_name)
     lpar_id = ""
     for partition in partitions:

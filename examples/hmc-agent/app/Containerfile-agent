@@ -7,20 +7,25 @@ ENV VIRTUAL_ENV=/opt/venv
 ENV PATH=${VIRTUAL_ENV}/bin:$PATH
 
 RUN microdnf install -y dnf openssl-devel && dnf install -y \
-       openblas-devel python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip \
+    openblas-devel python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip \
     && dnf clean all \
     && python${PYTHON_VERSION} -m venv ${VIRTUAL_ENV} \
     && python -m pip install -U pip uv \
-    && uv pip install wheel build setuptools 'cmake<4' cython \
-    && libjpeg-devel nodejs
+    && uv pip install wheel build setuptools 'cmake<4' cython
 
-ENV OLLAMA_MODEL=${OLLAMA_MODEL}
+RUN dnf groupinstall -y "Development Tools" && \
+    dnf install -y nodejs && \
+    dnf clean all && \
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+    export PATH="$HOME/.cargo/bin:$PATH" && \
+    rustup install nightly && \
+    rustup override set nightly
 
 WORKDIR /hmc_agent
 
 COPY agent.py hmc.py /hmc_agent/
 COPY pyproject.toml /hmc_agent/
 
-RUN uv sync
+RUN export PATH="$HOME/.cargo/bin:$PATH" && uv sync
 
 ENTRYPOINT [ "uv", "run", "/hmc_agent/agent.py" ]

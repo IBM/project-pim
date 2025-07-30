@@ -23,7 +23,7 @@ RUN dnf groupinstall -y "Development Tools" && \
 
 WORKDIR /hmc_server
 
-COPY server.py /hmc_server/
+COPY server.py hmc.py /hmc_server/
 COPY pyproject.toml /hmc_server/
 
 RUN export PATH="$HOME/.cargo/bin:$PATH" && uv sync

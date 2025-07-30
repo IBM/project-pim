@@ -8,7 +8,7 @@ var_to_add=OLLAMA_MODEL=$(jq -r '.llmArgs' /etc/pim/pim_config.json | awk '{prin
 sed -i "/^OLLAMA_MODEL=.*/d" /etc/pim/hmc.conf && echo "$var_to_add" >> /etc/pim/hmc.conf
 
 # Reads comma separated env values from hmcConfig var in pim_config.json and loads them into separate lines in hmc.conf to be consumed by agentic AI application
-HMC_CONFIGS=$(jq -r '.llmEnv' /etc/pim/pim_config.json)
+HMC_CONFIGS=$(jq -r '.hmcConfig' /etc/pim/pim_config.json)
 IFS=',' read -ra envs <<< "$HMC_CONFIGS"
 for env in "${envs[@]}"; do
     key="${env%%=*}"
@@ -16,5 +16,8 @@ for env in "${envs[@]}"; do
     sed -i "/^${key}=.*/d" /etc/pim/hmc.conf && echo "$(echo "$env" | sed 's/^[[:space:]]*//')" >> /etc/pim/hmc.conf
 done
 
-var_to_add=OPEN_AI_BASE_URL=$(jq -r '.llmArgs' /etc/pim/pim_config.json)
+var_to_add=MCP_SERVER_URL=$(jq -r '.mcpServerURL' /etc/pim/pim_config.json)
+sed -i "/^MCP_SERVER_URL=.*/d" /etc/pim/hmc.conf && echo "$var_to_add" >> /etc/pim/hmc.conf
+
+var_to_add=OPEN_AI_BASE_URL=$(jq -r '.openAIBaseURL' /etc/pim/pim_config.json)
 sed -i "/^OPEN_AI_BASE_URL=.*/d" /etc/pim/hmc.conf && echo "$var_to_add" >> /etc/pim/hmc.conf

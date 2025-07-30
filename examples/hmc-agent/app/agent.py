@@ -6,11 +6,11 @@ import asyncio
 import os
 
 class MCPClient:
-    def __init__(self, openai_base_url, model, mcp_server_url="http://127.0.0.1:8003/sse"):
+    def __init__(self, model, openai_base_url, mcp_server_url):
         self.model = ChatOpenAI(
             model=model,
             openai_api_base=openai_base_url,
-            openai_api_key="xyz abcd",
+            openai_api_key="xyz",
             temperature=0.6,
             streaming=False  # Disable streaming for better compatibility
         )
@@ -45,7 +45,7 @@ class MCPClient:
 
     async def interactive_chat(self):
         while True:
-            user_input = input("\nYou: ")
+            user_input = "get me the HMC version"
             if user_input.lower() == "exit":
                 print("Ending chat session...")
                 break
@@ -57,7 +57,8 @@ async def main():
     try:
         model = os.getenv("OLLAMA_MODEL")
         openai_base_url = os.getenv("OPEN_AI_BASE_URL")
-        client = MCPClient(model, openai_base_url)
+        mcp_server_url = os.getenv("MCP_SERVER_URL")
+        client = MCPClient(model, openai_base_url, mcp_server_url)
         print("\nInitializing agent...")
         await client.initialize_agent()
         
@@ -68,4 +69,4 @@ async def main():
 
 if __name__ == "__main__":
     # Run the async main function
-    asyncio.run(main()) 
+    asyncio.run(main())

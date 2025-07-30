@@ -23,7 +23,7 @@ RUN dnf groupinstall -y "Development Tools" && \
 
 WORKDIR /hmc_agent
 
-COPY agent.py hmc.py /hmc_agent/
+COPY agent.py /hmc_agent/
 COPY pyproject.toml /hmc_agent/
 
 RUN export PATH="$HOME/.cargo/bin:$PATH" && uv sync

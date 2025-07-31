@@ -35,3 +35,18 @@ config-json = """
   }
   """
 ```
+
+## Steps to build PIM HMC agent image
+Pre-requisite: Since PIM HMC agent image bootstraps HMC server and HMC agent, build the respective container images and push them to container registry by following steps [here](./app/README.md)
+
+- Enter into hmc-agent example application directory containing [Containerfile](./Containerfile)
+- Build the PIM HMC agent container image using podman
+```
+podman build -f Containerfile -t <your_registry>/pim_hmc_agent
+```
+- Push the PIM HMC agent container image to container registry
+```
+podman push <your_registry>/pim_hmc_agent
+```
+
+**NOTE: While deploying HMC agent application, use the <your_registry>/pim_hmc_agent image built above as the image parameter in [config](../../config.ini)**

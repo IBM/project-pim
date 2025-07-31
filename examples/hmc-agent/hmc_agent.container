@@ -9,7 +9,7 @@ RestartSec=60
 EnvironmentFile=/etc/pim/env.conf
 
 [Container]
-Image=na.artifactory.swg-devops.com/sys-pcloud-docker-local/devops/pim/hmc_agent
+Image=na.artifactory.swg-devops.com/sys-pcloud-docker-local/devops/pim/apps/hmc_agent
 Network=host
 EnvironmentFile=/etc/pim/hmc.conf
 SecurityLabelType=unconfined_t

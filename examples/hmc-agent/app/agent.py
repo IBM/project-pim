@@ -55,7 +55,7 @@ class MCPClient:
 
 async def main():
     try:
-        model = os.getenv("OLLAMA_MODEL")
+        model = os.getenv("MODEL_PARAM")
         openai_base_url = os.getenv("OPEN_AI_BASE_URL")
         mcp_server_url = os.getenv("MCP_SERVER_URL")
         client = MCPClient(model, openai_base_url, mcp_server_url)

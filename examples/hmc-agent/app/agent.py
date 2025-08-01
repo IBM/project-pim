@@ -6,6 +6,7 @@ import asyncio
 import os
 
 OPEN_AI_BASE_URL = "http://0.0.0.0:8000/v1"
+# If MCP server needs to be run on differnt port, make sure to use same port in server.py
 MCP_SERVER_URL = "http://0.0.0.0:8001/sse"
 
 class MCPClient:

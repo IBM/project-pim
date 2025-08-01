@@ -1,6 +1,8 @@
 # HMC Server
 HMC Server is an MCP server with several tools to interact or perform action on HMC. HMC server is built using FastMCP server that listens on port 8001.
 
+**NOTE: If user wants to run HMC server on a port other than default 8001, make sure to update same port in variable `MCP_SERVER_URL` in agent.py**
+
 ## Steps to build HMC server container image
 1. Enter into hmc-agent app directory containing [HMC Server Containerfile](./Containerfile-server)
 2. Build HMC server container image using podman

@@ -1,5 +1,5 @@
 # HMC Server
-HMC Server is an MCP server with several tools to interact or perform action on HMC. HMC server is built using FastMCP server that listens on port 8003.
+HMC Server is an MCP server with several tools to interact or perform action on HMC. HMC server is built using FastMCP server that listens on port 8001.
 
 ## Steps to build HMC server container image
 1. Enter into hmc-agent app directory containing [HMC Server Containerfile](./Containerfile-server)
@@ -27,6 +27,10 @@ podman push <your_registry>/hmc_agent
 ```
 
 ### Sample prompts:
+HMC Agent supports various tools which perform operations on HMC server and returns response to user prompts.  
+Currently it supports tools to `Get HMC version`, `Get systems managed by HMC`, `Get compute usage of a Power server`, `Get logical partitions created under a power server`, `Get partition stats of a specific lpar`.  
+Support for tools to Read and Write HMC operations will be added subsequently.
+
 Below are sample prompts triggered from user interface
 ```
 - get me the HMC version

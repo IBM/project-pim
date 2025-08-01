@@ -1,4 +1,6 @@
 from mcp.server.fastmcp import FastMCP
+import os
+import re
 from tabulate import tabulate
 import urllib3
 
@@ -6,8 +8,8 @@ import hmc
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Create server 
-mcp = FastMCP("ibmhmcserver")
+# Create MCP server, if MCP server needs to be run on differnt port make sure to use same port in MCP_SERVER_URL in agent.py
+mcp = FastMCP("ibmhmcserver", host="0.0.0.0", port="8001")
 
 # Add hmc version retriever tool
 @mcp.tool()

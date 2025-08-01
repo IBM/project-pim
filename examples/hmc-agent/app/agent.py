@@ -3,13 +3,18 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import AIMessage
 import asyncio
+import os
+
+OPEN_AI_BASE_URL = "http://0.0.0.0:8000/v1"
+# If MCP server needs to be run on differnt port, make sure to use same port in server.py
+MCP_SERVER_URL = "http://0.0.0.0:8001/sse"
 
 class MCPClient:
-    def __init__(self, mcp_server_url="http://127.0.0.1:8000/sse"):
+    def __init__(self, model, openai_base_url, mcp_server_url):
         self.model = ChatOpenAI(
-            model="ibm-granite/granite-3.2-8b-instruct",
-            openai_api_base="",
-            openai_api_key="",
+            model=model,
+            openai_api_base=openai_base_url,
+            openai_api_key="xyz",
             temperature=0.6,
             streaming=False  # Disable streaming for better compatibility
         )
@@ -44,7 +49,7 @@ class MCPClient:
 
     async def interactive_chat(self):
         while True:
-            user_input = input("\nYou: ")
+            user_input = "get me the HMC version"
             if user_input.lower() == "exit":
                 print("Ending chat session...")
                 break
@@ -54,7 +59,8 @@ class MCPClient:
 
 async def main():
     try:
-        client = MCPClient()
+        model = os.getenv("MODEL_PARAM")
+        client = MCPClient(model, OPEN_AI_BASE_URL, MCP_SERVER_URL)
         print("\nInitializing agent...")
         await client.initialize_agent()
         
@@ -65,4 +71,4 @@ async def main():
 
 if __name__ == "__main__":
     # Run the async main function
-    asyncio.run(main()) 
+    asyncio.run(main())

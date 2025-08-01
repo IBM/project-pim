@@ -1,0 +1,15 @@
+[Unit]
+Description=Mount and setup HMC Agent config
+Requires=base_config.service
+After=base_config.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env /bin/bash /usr/bin/hmc_config.sh
+RemainAfterExit=yes
+TimeoutSec=0 
+
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target default.target

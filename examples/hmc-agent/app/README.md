@@ -1,48 +1,39 @@
-# AI agent to manage Power Infra using MCP Server built for HMC 
+# HMC Server
+HMC Server is an MCP server with several tools to interact or perform action on HMC. HMC server is built using FastMCP server that listens on port 8001.
 
-# Setup
-1. Clone this repository `git clone https://github.com/IBM/project-pim` and get into `examples/hmc-agent/app`
-2. Create a virtual environment `uv venv` and activate it `source .venv/bin/activate`
-3. Install the dependencies `uv sync`
-Note: Make sure npm/nodejs dependency is installed to use `uv` functionalities 
+**NOTE: If user wants to run HMC server on a port other than default 8001, make sure to update same port in variable `MCP_SERVER_URL` in agent.py**
 
-# Usage
-
-Run ollama in local wherever you are going to run your agent application
-
-**Set env for server**
+## Steps to build HMC server container image
+1. Enter into hmc-agent app directory containing [HMC Server Containerfile](./Containerfile-server)
+2. Build HMC server container image using podman
 ```
-# HMC details
-export HMC_IP=""
-export HMC_USERNAME=""
-export HMC_PASSWORD=""
+podman build -f Containerfile-server -t <your_registry>/hmc_server
 ```
-**Run the server**
+3. Push the HMC server container image to container registry
 ```
-uv run server.py
-```
-Since this is an SSE transport server, which would be running on `http://127.0.0.1:8000` by default.
-Agent can use this URL to bind the tools and do agent tools invocation
-
-**Set env for agent**
-```
-# Model to use
-export OLLAMA_MODEL="ollama_chat/granite3.2:8b"
-```
-**Run the agent**
-```
-uv run agent.py
-
-ex:
-$ (infra-agents) dharaneesh@Mac infra-agents % uv run agent.py
-$
-$ You: get me the HMC version
-$ 
-$ Agent: The HMC (Hardware Management Console) version is 10.0.1021. This includes a major version of 10, a minor version of 0, and a service pack version of 1021.
-$
+podman push <your_registry>/hmc_server
 ```
 
-Sample prompts:
+# HMC agent
+HMC agent is an MCP client which interacts with MCP server to get a response to user prompt. Its built using langgraph and has an user interface to accept user prompts and display the response.
+
+## Steps to build HMC server container image
+1. Enter into hmc-agent app directory containing [HMC Agent Containerfile](./Containerfile-agent)
+2. Build HMC agent container image using podman
+```
+podman build -f Containerfile-agent -t <your_registry>/hmc_agent
+```
+3. Push the HMC agent container image to container registry
+```
+podman push <your_registry>/hmc_agent
+```
+
+### Sample prompts:
+HMC Agent supports various tools which perform operations on HMC server and returns response to user prompts.  
+Currently it supports tools to `Get HMC version`, `Get systems managed by HMC`, `Get compute usage of a Power server`, `Get logical partitions created under a power server`, `Get partition stats of a specific lpar`.  
+Support for tools to Read and Write HMC operations will be added subsequently.
+
+Below are sample prompts triggered from user interface
 ```
 - get me the HMC version
 - get me the systems managed by HMC
@@ -50,5 +41,3 @@ Sample prompts:
 - get me the logical partitions created under system 'C340F1U07-ICP-Dedicated'
 - get me the stats of partition 'hamzy-bastion-f36de29b-00015f1f' under system 'C340F1U07-ICP-Dedicated'
 ```
-
-Optionally you can run the inspector `uv run mcp dev server.py` to interact with the tools directly without LLM

@@ -1,0 +1,19 @@
+[Unit]
+Description=Run simple HMC AI agent application and MCP server
+Requires=vllm.service hmc_config.service hmc_server.service
+After=vllm.service hmc_config.service hmc_server.service
+
+[Service]
+Restart=on-failure
+RestartSec=60
+EnvironmentFile=/etc/pim/env.conf
+
+[Container]
+Image=na.artifactory.swg-devops.com/sys-pcloud-docker-local/devops/pim/apps/hmc_agent
+Network=host
+EnvironmentFile=/etc/pim/hmc.conf
+SecurityLabelType=unconfined_t
+AutoUpdate=registry
+
+[Install]
+WantedBy=multi-user.target default.target

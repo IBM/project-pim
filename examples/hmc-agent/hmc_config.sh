@@ -15,9 +15,3 @@ for env in "${envs[@]}"; do
     key="$(echo "$key" | sed 's/^[[:space:]]*//')"
     sed -i "/^${key}=.*/d" /etc/pim/hmc.conf && echo "$(echo "$env" | sed 's/^[[:space:]]*//')" >> /etc/pim/hmc.conf
 done
-
-var_to_add=MCP_SERVER_URL=$(jq -r '.mcpServerURL' /etc/pim/pim_config.json)
-sed -i "/^MCP_SERVER_URL=.*/d" /etc/pim/hmc.conf && echo "$var_to_add" >> /etc/pim/hmc.conf
-
-var_to_add=OPEN_AI_BASE_URL=$(jq -r '.openAIBaseURL' /etc/pim/pim_config.json)
-sed -i "/^OPEN_AI_BASE_URL=.*/d" /etc/pim/hmc.conf && echo "$var_to_add" >> /etc/pim/hmc.conf

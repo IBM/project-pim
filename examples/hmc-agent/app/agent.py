@@ -5,6 +5,9 @@ from langchain_core.messages import AIMessage
 import asyncio
 import os
 
+OPEN_AI_BASE_URL = "http://0.0.0.0:8000/v1"
+MCP_SERVER_URL = "http://0.0.0.0:8001/sse"
+
 class MCPClient:
     def __init__(self, model, openai_base_url, mcp_server_url):
         self.model = ChatOpenAI(
@@ -56,9 +59,7 @@ class MCPClient:
 async def main():
     try:
         model = os.getenv("MODEL_PARAM")
-        openai_base_url = os.getenv("OPEN_AI_BASE_URL")
-        mcp_server_url = os.getenv("MCP_SERVER_URL")
-        client = MCPClient(model, openai_base_url, mcp_server_url)
+        client = MCPClient(model, OPEN_AI_BASE_URL, MCP_SERVER_URL)
         print("\nInitializing agent...")
         await client.initialize_agent()
         

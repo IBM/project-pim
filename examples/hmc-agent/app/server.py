@@ -1,6 +1,4 @@
 from mcp.server.fastmcp import FastMCP
-import os
-import re
 from tabulate import tabulate
 import urllib3
 

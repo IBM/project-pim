@@ -1,10 +1,13 @@
 ARG BASE_UBI_IMAGE_TAG=9.5-1742914212
-FROM registry.access.redhat.com/ubi9/ubi-minimal:${BASE_UBI_IMAGE_TAG}
+FROM registry.access.redhat.com/ubi9/ubi-minimal:${BASE_UBI_IMAGE_TAG} as hmc_builder
 
 ARG PYTHON_VERSION=3.12
 
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH=${VIRTUAL_ENV}/bin:$PATH
+
+WORKDIR /hmc_agent
+COPY pyproject.toml /hmc_agent/
 
 RUN microdnf install -y dnf openssl-devel && dnf install -y \
     openblas-devel python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip \
@@ -19,13 +22,26 @@ RUN dnf groupinstall -y "Development Tools" && \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
     export PATH="$HOME/.cargo/bin:$PATH" && \
     rustup install nightly && \
-    rustup override set nightly
+    rustup override set nightly && \
+    source ${VIRTUAL_ENV}/bin/activate && \
+    uv sync
+
+FROM registry.access.redhat.com/ubi9/ubi-minimal:${BASE_UBI_IMAGE_TAG}
+RUN microdnf install -y dnf && dnf install -y \
+  python3.12 python3.12-pip && dnf clean all
+
+COPY --from=hmc_builder /opt/venv /opt/venv
+COPY --from=hmc_builder /usr/local/lib /usr/local/lib
+COPY --from=hmc_builder /usr/lib64 /usr/lib64
+COPY --from=hmc_builder /root/.cargo /root/.cargo
+COPY --from=hmc_builder /hmc_agent/.venv /hmc_agent/.venv
+
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH=${VIRTUAL_ENV}/bin:$PATH
 
 WORKDIR /hmc_agent
 
-COPY agent.py /hmc_agent/
+COPY agent.py server.py hmc.py /hmc_agent/
 COPY pyproject.toml /hmc_agent/
-
-RUN export PATH="$HOME/.cargo/bin:$PATH" && uv sync
 
 ENTRYPOINT [ "uv", "run", "/hmc_agent/agent.py" ]

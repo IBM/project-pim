@@ -3,7 +3,7 @@
 This is a reference application built for PIM stack using MCP server leveraging HMC APIs.
 this wraps HMC server and agent on top of [vLLM server](../../examples/vllm/README.md) built.
 
-It bootstraps HMC server and HMC agent components. Steps to build and containerize them are [here](app/README.md)
+It bootstraps HMC server and HMC agent components. Steps to build and containerize are [here](app/README.md)
 
 ## Configuration
 

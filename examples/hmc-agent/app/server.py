@@ -60,7 +60,7 @@ def partition_stats(partition_name, system_name) -> str:
         str: Current stats of partition:: <current parititon's stats>
     """
     # Get lpar UUID from partition name
-    stats = hmc.paritition_stats(partition_name, system_name)
+    stats = hmc.partition_stats(partition_name, system_name)
     parititon_stats = {"partition_stats": stats}
     return str(f"Current stats of partition: \n{parititon_stats}")
 

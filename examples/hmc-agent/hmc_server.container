@@ -12,7 +12,7 @@ EnvironmentFile=/etc/pim/env.conf
 Image=na.artifactory.swg-devops.com/sys-pcloud-docker-local/devops/pim/apps/hmc_agent
 Network=host
 EnvironmentFile=/etc/pim/hmc.conf
-PodmanArgs=--entrypoint='["/bin/bash", "-c", "cd /hmc_agent && source /opt/venv/bin/activate && uv run server.py"]'
+PodmanArgs=--entrypoint='["python3", "server.py"]'
 SecurityLabelType=unconfined_t
 AutoUpdate=registry
 

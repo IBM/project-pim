@@ -1,13 +1,29 @@
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
-from langchain_core.messages import AIMessage
 import asyncio
 import os
+import streamlit as st
 
 OPEN_AI_BASE_URL = "http://0.0.0.0:8000/v1"
 # If MCP server needs to be run on differnt port, make sure to use same port in server.py
 MCP_SERVER_URL = "http://0.0.0.0:8001/sse"
+
+
+st.set_page_config(page_title="Infra agent Chat", page_icon="🤖", layout="centered")
+st.title("HMC Agent Chat  💬")
+st.markdown(
+    """
+    <p style='text-align: center; font-size: 20px;'>
+    Interact with the HMC apis to get answers for the queries
+    </p>
+    """,
+    unsafe_allow_html=True
+)
+
+if "history" not in st.session_state:
+    st.session_state.history = []
+
 
 class MCPClient:
     def __init__(self, model, openai_base_url, mcp_server_url):
@@ -29,7 +45,7 @@ class MCPClient:
     
         self.SYSTEM_PROMPT = """You are an AI assistant that helps users to list the systems managed by HMC, list the partitions under a specific system and get the version of HMC via available tools.
         
-        When listing partitions under provided system, call list_partitions tool with an arg as system name and it return a list containing partition informations.
+        When listing partitions under provided system, call list_partitions tool with an arg as system name and it return a list containing partition information.
         
         When listing systems, call list_systems tool and it returns a list containing system names.
         
@@ -48,24 +64,38 @@ class MCPClient:
         return response["messages"][-1].content
 
     async def interactive_chat(self):
-        while True:
-            user_input = "get me the HMC version"
-            if user_input.lower() == "exit":
-                print("Ending chat session...")
-                break
+        """Streamlit-based interactive chat interface."""
+
+        user_input = st.chat_input("What HMC task would you like help with?")
+        if user_input:
+             # Show spinner while processing
+            st.session_state.history.append(("User", user_input))
+            with st.spinner("⚙️ Working on your HMC request..."):
+                response = await self.process_message(user_input)
+                st.session_state.history.append(("Agent", response))
             
-            response = await self.process_message(user_input)
-            print("\nAgent:", response)
+        self.populate_chat_history()
+    
+    def populate_chat_history(self):
+        for sender, message in st.session_state.history:
+            if sender == "User":
+                st.chat_message("user").write(message)
+            else:
+                st.chat_message("assistant").write(message)
 
 async def main():
     try:
         model = os.getenv("MODEL_PARAM")
-        client = MCPClient(model, OPEN_AI_BASE_URL, MCP_SERVER_URL)
-        print("\nInitializing agent...")
-        await client.initialize_agent()
-        
-        print("\nStarting interactive chat...")
-        await client.interactive_chat()
+        if "mcp_client" not in st.session_state:
+            client = MCPClient(model, OPEN_AI_BASE_URL, MCP_SERVER_URL)
+            print("\nInitializing agent...")
+            await client.initialize_agent()
+
+            st.session_state.mcp_client = client
+            print("\nStarting interactive chat...")
+            await client.interactive_chat()
+        else:
+            await st.session_state.mcp_client.interactive_chat()        
     except Exception as e:
         print(f"\nUnexpected error: {type(e).__name__} - {str(e)}")
 

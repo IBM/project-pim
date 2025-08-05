@@ -1,4 +1,43 @@
 ARG BASE_UBI_IMAGE_TAG=9.5-1742914212
+
+FROM registry.access.redhat.com/ubi9/ubi-minimal:${BASE_UBI_IMAGE_TAG} AS arrow-builder
+
+ARG PYTHON_VERSION=3.12
+ARG PYARROW_PARALLEL
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH=${VIRTUAL_ENV}/bin:$PATH
+ARG PYARROW_VERSION=19.0.1
+
+RUN microdnf install -y dnf openssl-devel && dnf install -y \
+       git gcc g++ tar gcc-toolset-13 automake libtool zlib-devel libjpeg-devel\
+       openblas-devel python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip \
+    && dnf clean all \
+    && python${PYTHON_VERSION} -m venv ${VIRTUAL_ENV} \
+    && python -m pip install -U pip uv \
+    && uv pip install wheel build setuptools 'cmake<4' cython
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    source /opt/rh/gcc-toolset-13/enable && \
+    git clone --recursive https://github.com/apache/arrow.git -b apache-arrow-${PYARROW_VERSION} && \
+    cd arrow/cpp && \
+    mkdir build && cd build && \
+    cmake -DCMAKE_BUILD_TYPE=release \
+	-DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DARROW_PYTHON=ON \
+        -DARROW_BUILD_TESTS=OFF \
+        -DARROW_JEMALLOC=ON \
+        -DARROW_BUILD_STATIC="OFF" \
+        -DARROW_PARQUET=ON \
+        .. && \
+    make install -j ${MAX_JOBS:-$(nproc)} && \
+    cd ../../python/ && \
+    uv pip install -v -r requirements-wheel-build.txt && \
+    PYARROW_PARALLEL=${PYARROW_PARALLEL:-$(nproc)} \
+    python setup.py build_ext \
+    --build-type=release --bundle-arrow-cpp \
+    bdist_wheel --dist-dir /arrowwheels/
+
 FROM registry.access.redhat.com/ubi9/ubi-minimal:${BASE_UBI_IMAGE_TAG} as hmc_builder
 
 ARG PYTHON_VERSION=3.12
@@ -10,11 +49,15 @@ WORKDIR /hmc_agent
 COPY pyproject.toml /hmc_agent/
 
 RUN microdnf install -y dnf openssl-devel && dnf install -y \
+    git gcc g++ tar gcc-toolset-13 automake libtool zlib-devel libjpeg-devel \
     openblas-devel python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip \
     && dnf clean all \
     && python${PYTHON_VERSION} -m venv ${VIRTUAL_ENV} \
     && python -m pip install -U pip uv \
     && uv pip install wheel build setuptools 'cmake<4' cython
+
+COPY --from=arrow-builder /arrowwheels/pyarrow-*.whl .
+RUN  /opt/venv/bin/pip3.12 install pyarrow-*.whl
 
 RUN dnf groupinstall -y "Development Tools" && \
     dnf install -y nodejs && \
@@ -22,9 +65,11 @@ RUN dnf groupinstall -y "Development Tools" && \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
     export PATH="$HOME/.cargo/bin:$PATH" && \
     rustup install nightly && \
-    rustup override set nightly && \
+    rustup override set nightly
+
+RUN  export PATH="$HOME/.cargo/bin:$PATH" && \
     source ${VIRTUAL_ENV}/bin/activate && \
-    uv sync
+    /opt/venv/bin/pip3.12 install .
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:${BASE_UBI_IMAGE_TAG}
 RUN microdnf install -y dnf && dnf install -y \
@@ -34,7 +79,6 @@ COPY --from=hmc_builder /opt/venv /opt/venv
 COPY --from=hmc_builder /usr/local/lib /usr/local/lib
 COPY --from=hmc_builder /usr/lib64 /usr/lib64
 COPY --from=hmc_builder /root/.cargo /root/.cargo
-COPY --from=hmc_builder /hmc_agent/.venv /hmc_agent/.venv
 
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH=${VIRTUAL_ENV}/bin:$PATH
@@ -44,4 +88,4 @@ WORKDIR /hmc_agent
 COPY agent.py server.py hmc.py /hmc_agent/
 COPY pyproject.toml /hmc_agent/
 
-ENTRYPOINT [ "uv", "run", "/hmc_agent/agent.py" ]
+ENTRYPOINT [ "streamlit", "run", "/hmc_agent/agent.py" ]

@@ -49,7 +49,7 @@ WORKDIR /hmc_agent
 COPY pyproject.toml /hmc_agent/
 
 RUN microdnf install -y dnf openssl-devel && dnf install -y \
-    git gcc g++ tar gcc-toolset-13 automake libtool zlib-devel libjpeg-devel \
+    gcc g++ tar gcc-toolset-13 automake libtool zlib-devel libjpeg-devel \
     openblas-devel python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip \
     && dnf clean all \
     && python${PYTHON_VERSION} -m venv ${VIRTUAL_ENV} \

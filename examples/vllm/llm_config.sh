@@ -25,3 +25,33 @@ mkdir /var/huggingface
 var_to_add=HF_HUB_CACHE=/var/huggingface
 sed -i "/^HF_HUB_CACHE=.*/d" /etc/pim/llm.conf && echo "$var_to_add" >> /etc/pim/llm.conf
 
+MODEL="granite-3.2-8b-instruct.tar.gz"
+MODEL_DIR="/var/huggingface"
+URL="http://9.114.99.184/$MODEL"
+OUTPUT="$MODEL_DIR/$MODEL"
+RETRIES=3
+WAIT_SECONDS=10
+
+attempt=1
+while [ $attempt -le $RETRIES ]; do
+    echo "Attempt $attempt to download $URL..."
+    curl -fSL -o "$OUTPUT" "$URL"
+    if [ $? -eq 0 ]; then
+        echo "Download succeeded."
+        break
+    else
+        echo "Download failed. Retrying in $WAIT_SECONDS seconds..."
+        sleep $WAIT_SECONDS
+        attempt=$((attempt + 1))
+    fi
+done
+
+if [ ! -f "$OUTPUT" ]; then
+    echo "Failed to download the file after $RETRIES attempts. Exiting."
+    exit 1
+fi
+
+sleep 5
+# Extract only if the file exists and curl succeeded
+tar -xzvf "$OUTPUT" --one-top-level -C "$MODEL_DIR"
+

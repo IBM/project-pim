@@ -8,14 +8,14 @@ import streamlit as st
 OPEN_AI_BASE_URL = "http://0.0.0.0:8000/v1"
 # If MCP server needs to be run on different port, make sure to use same port in server.py
 MCP_SERVER_URL = "http://0.0.0.0:8001/sse"
+HMC_IP = os.getenv("HMC_IP")
 
-
-st.set_page_config(page_title="HMC Infra agent Chat", page_icon="🤖", layout="centered")
-st.title("HMC Agent Chat  💬")
+st.set_page_config(page_title="HMC Chatbot", page_icon="🤖", layout="centered")
+st.title("HMC Chatbot  💬")
 st.markdown(
-    """
+    f"""
     <p style='text-align: center; font-size: 20px;'>
-    Interact with the HMC APIs to get answers for the queries
+    Interact with this chatbot to manage your HMC '{HMC_IP}' managing your Power systems
     </p>
     """,
     unsafe_allow_html=True

@@ -24,3 +24,4 @@ sed -i "/^LLM_IMAGE=.*/d" /etc/pim/llm.conf && echo "$var_to_add" >> /etc/pim/ll
 mkdir /var/huggingface
 var_to_add=HF_HUB_CACHE=/var/huggingface
 sed -i "/^HF_HUB_CACHE=.*/d" /etc/pim/llm.conf && echo "$var_to_add" >> /etc/pim/llm.conf
+

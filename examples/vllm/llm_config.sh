@@ -25,3 +25,7 @@ mkdir /var/huggingface
 var_to_add=HF_HUB_CACHE=/var/huggingface
 sed -i "/^HF_HUB_CACHE=.*/d" /etc/pim/llm.conf && echo "$var_to_add" >> /etc/pim/llm.conf
 
+
+# Starting container to download vllm model
+sleep 2
+podman run -v /var/huggingface:/var/huggingface:z quay.io/adarshagrawal38/download_llm

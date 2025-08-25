@@ -1,0 +1,10 @@
+[project]
+name = "vllm-download-manager"
+version = "0.1.0"
+description = "VLLM download manager"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "requests==2.32.5",
+    "configobj==5.0.9"
+]

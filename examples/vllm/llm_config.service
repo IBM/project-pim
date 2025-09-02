@@ -1,7 +1,7 @@
 [Unit]
 Description=Mount and setup LLM config
-Requires=base_config.service
-After=base_config.service
+Requires=base_config.service network-online.target cloud-config.target
+After=base_config.service network-online.target cloud-config.target
 
 [Service]
 Type=oneshot

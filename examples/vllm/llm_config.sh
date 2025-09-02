@@ -25,3 +25,8 @@ mkdir /var/huggingface
 var_to_add=HF_HUB_CACHE=/var/huggingface
 sed -i "/^HF_HUB_CACHE=.*/d" /etc/pim/llm.conf && echo "$var_to_add" >> /etc/pim/llm.conf
 
+# Download model from the self-hosted server
+MODEL_SOURCE=$(jq -r '.modelSource' /etc/pim/pim_config.json)
+if [[ -n "$MODEL_SOURCE" ]]; then
+    python3 /usr/bin/download_model.py --config /etc/pim/pim_config.json --downloadPath /var/huggingface
+fi

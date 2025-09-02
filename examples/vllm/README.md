@@ -13,6 +13,8 @@ vLLM container image built using app section [here](app/README.md). This is give
 Arguments you want to pass it to your vLLM inference engine
 #### llmEnv
 Environment variables that you want to set while running vLLM inference engine
+#### modelSource
+A JSON object that specifies the source URL for downloading the LLM model from a self-hosted HTTP server. Use this parameter to setup a offline model download location within the local network. This is suitable for environment which restricts outside connection. If this parameter is not provided, the model will be downloaded from hugging face over the internet. Follow the steps [here](#steps-to-set-up-a-server-to-host-an-llm-model-locally) to bring up slef-hosted HTTP server.
 
 **Sample config:**
 ```ini
@@ -20,7 +22,8 @@ config-json = """
   {
         "llmImage": "na.artifactory.swg-devops.com/sys-pcloud-docker-local/devops/pim/apps/vllm",
         "llmArgs": "--model ibm-granite/granite-3.2-8b-instruct --max-model-len=26208 --enable-auto-tool-choice --tool-call-parser granite",
-        "llmEnv": "OMP_NUM_THREADS=16"
+        "llmEnv": "OMP_NUM_THREADS=16",
+        "modelSource": { "url": "http://<Domain>/models--ibm-granite--granite-3.2-8b-instruct.tar.gz" }
   }
   """
 ```
@@ -37,3 +40,40 @@ podman build -t <your_registry>/vllm
 
 podman push <your_registry>/vllm
 ```
+
+
+### Steps to Set Up a Server to Host an LLM Model Locally
+**Step 1: Download the model using Hugging Face CLI**
+```shell
+pip install huggingface_hub
+
+huggingface-cli download  <model-id>
+
+Example: 
+huggingface-cli download ibm-granite/granite-3.2-8b-instruct
+```
+**Step 2: Create a tarball of the downloaded model folder**
+```shell
+tar -cvzf models--<model-id>.tar.gz <path-to-downloaded-model-directory>
+
+Example:
+tar -cvzf models--ibm-granite--granite-3.2-8b-instruct.tar.gz /var/huggingface/models--ibm-granite--granite-3.2-8b-instruct
+```
+**Step 3: Start an HTTP service on the server VM**
+```shell
+sudo yum install httpd
+sudo systemctl start httpd
+```
+**Step 4: Copy the tar file to the web server directory**
+```shell
+cp <tarball-file-path> /var/www/html
+
+Example
+cp models--ibm-granite--granite-3.2-8b-instruct.tar.gz /var/www/html
+```
+**Step 5: Form the URL to access the model tarball**
+```shell
+http://<ip>/models--ibm-granite--granite-3.2-8b-instruct.tar.gz
+```
+Use the above URL in modelSource.url parameter to download model from the local server.
+

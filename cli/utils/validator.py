@@ -2,8 +2,8 @@ import json
 import re
 import requests
 
+from bs4 import BeautifulSoup
 from cli.network.virtual_network import get_network_uuid
-
 from cli.utils.common import *
 from cli.utils.string_util import *
 
@@ -312,3 +312,23 @@ def get_flavor_name(config):
      if has_custom_flavor(config):
         return "custom-flavor"
      return get_partition_flavor(config)
+
+
+def validate_host_config(config, cookies, system_uuid):
+    uri = f"/rest/api/uom/ManagedSystem/{system_uuid}"
+    url =  "https://" + util.get_host_address(config) + uri
+    headers = {"x-api-key": util.get_session_key(config)}
+    response = requests.get(url, headers=headers, cookies=cookies, verify=False)
+    if response.status_code != 200:
+        logger.error(f"failed to get hmc version: {response.text}")
+        return
+
+    
+    soup = BeautifulSoup(response.text, 'xml')
+    fw_version = soup.find("SystemFirmware").text
+    supported_versions = ["FW1110.00", "FW1050.50", "FW1060.50"]
+    for supported_version in supported_versions:
+        if supported_version in fw_version:
+            return True
+    logger.error(f"Got firmware version as '{fw_version}', supported versions: '{supported_versions}'")
+    return False

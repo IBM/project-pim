@@ -29,6 +29,9 @@ def initialize_command(config):
     sys_uuid = get_system_uuid(config, cookies)
     logger.debug(f"System UUID: {sys_uuid}")
 
+    if not validator.validate_host_config(config, cookies, sys_uuid):
+        return False, "", "", []
+    
     if not validator.validate_networks(config, cookies, sys_uuid):
         return False, "", "", []
 

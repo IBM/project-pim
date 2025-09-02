@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -37,21 +38,46 @@ def http_server(url, download_path):
     if os.path.exists(file_path):
         logger.info(f"Skipping download of file as it is already present in the '{download_path}' the path")
     else:
-        download_file_from_url(url, file_path)
+        checksum = get_tarfile_checksum(url)
+        download_file_from_url(url, file_path, checksum)
     extract_tar_file(file_path, download_path)
     remove_tar_file(file_path)
 
 
-def download_file_from_url(url, file_path):
+def get_tarfile_checksum(url):
+    url_path = urlparse(url).path
+    tar_file = url_path.split('/')[-1]
+    checksum_file = tar_file.replace('.tar.gz', '.checksum')
+    checksum_url = url.replace(tar_file, checksum_file)
+
+    try:
+        response = requests.get(checksum_url)
+        response.raise_for_status()
+        checksum_value = response.text.strip().split()[0]
+    except Exception as e:
+        logger.error(f"failed to get checksum value: {e}")
+        raise e
+    return checksum_value
+
+
+def download_file_from_url(url, file_path, checksum):
     logger.info(f"Downloading file from the url '{url}'")
 
     try:
         response = requests.get(url, stream=True)
+        digest = hashlib.sha256()
         response.raise_for_status()
         with open(file_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
+                digest.update(chunk)
         logger.info(f"File downloaded successfully to '{file_path}'")
+        file_checksum = digest.hexdigest()
+        if checksum == file_checksum:
+            logger.info("Integrity of the downloaded file validated.")
+        else:
+            logger.error(f"Mismatch in the checksum value.\nExpected: {checksum}.\nGot: {file_checksum}")
+            raise Exception("Mismatch in the checksum value")
     except requests.exceptions.RequestException as e:
         logger.error(f"error during download: {e}")
 

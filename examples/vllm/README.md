@@ -14,7 +14,7 @@ Arguments you want to pass it to your vLLM inference engine
 #### llmEnv
 Environment variables that you want to set while running vLLM inference engine
 #### modelSource
-A JSON object that specifies the source URL for downloading the LLM model from a self-hosted HTTP server. Use this parameter to setup a offline model download location within the local network. This is suitable for environment which restricts outside connection. If this parameter is not provided, the model will be downloaded from hugging face over the internet. Follow the steps [here](#steps-to-set-up-a-server-to-host-an-llm-model-locally) to bring up slef-hosted HTTP server.
+A JSON object that specifies the source from which you want to download the model. Use this parameter to use a offline model loaded within the local network instead of downloading from hugging face over the internet. This is suitable for environment which restricts outside connection. Follow the steps [here](#steps-to-set-up-a-server-to-host-an-llm-model-locally) to bring up self-hosted HTTP server which serves the offline models.
 
 **Sample config:**
 ```ini
@@ -53,11 +53,11 @@ Example:
 huggingface-cli download ibm-granite/granite-3.2-8b-instruct
 ```
 **Step 2: Create a tarball of the downloaded model folder**
-```shell
-tar -cvzf models--<model-id>.tar.gz <path-to-downloaded-model-directory>
-
+- `model-id` should follow models--<account--model> format. Since vLLM expects in this format when it loads from the cache. 
 Example:
-tar -cvzf models--ibm-granite--granite-3.2-8b-instruct.tar.gz /var/huggingface/models--ibm-granite--granite-3.2-8b-instruct
+`model-id` for ibm-granite/granite-3.2-8b-instruct is `models--ibm-granite--granite-3.2-8b-instruct`
+```shell
+tar -cvzf <model-id>.tar.gz <path-to-downloaded-model-directory>
 ```
 **Step 3: Start an HTTP service on the server VM**
 ```shell

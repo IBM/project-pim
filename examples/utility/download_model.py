@@ -8,16 +8,15 @@ import tarfile
 
 from urllib.parse import urlparse
 
-LOG_LEVEL = logging.INFO
+logger = None
 
-
-def get_logger(name):
+def get_logger(name, log_level):
     logger = logging.getLogger(name)
-    logger.setLevel(LOG_LEVEL)
+    logger.setLevel(log_level)
     logger.propagate = False
 
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(LOG_LEVEL)
+    console_handler.setLevel(log_level)
     formatter = logging.Formatter(
         '%(asctime)s - %(name)-18s - %(levelname)-8s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S')
@@ -26,8 +25,6 @@ def get_logger(name):
     logger.addHandler(console_handler)
 
     return logger
-
-logger = get_logger("download-manager")
 
 
 def http_server(url, download_path):
@@ -74,7 +71,7 @@ def download_file_from_url(url, file_path, checksum):
         logger.info(f"File downloaded successfully to '{file_path}'")
         file_checksum = digest.hexdigest()
         if checksum == file_checksum:
-            logger.info("Integrity of the downloaded file validated.")
+            logger.debug("Integrity of the downloaded file validated.")
         else:
             logger.error(f"Mismatch in the checksum value.\nExpected: {checksum}.\nGot: {file_checksum}")
             raise Exception("Mismatch in the checksum value")
@@ -120,9 +117,16 @@ def main():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--config", type=str, help="Path to the configuration file")
     parser.add_argument("--downloadPath", type=str, help="Download path of the the AI model.")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     
     args = parser.parse_args()
-
+    log_level = logging.INFO
+    if args.debug:
+        log_level = logging.DEBUG
+    
+    global logger
+    logger = get_logger("download-manager", log_level)
+    
     try:
         config = load_config(args.config)
         download_manager(config, args.downloadPath)

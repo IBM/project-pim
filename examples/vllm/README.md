@@ -74,7 +74,7 @@ cp models--ibm-granite--granite-3.2-8b-instruct.tar.gz /var/www/html
 **Step 5: Generate a checksum for the tarball**
 - The checksum will be used to verify the integrity of the file after it is downloaded..
 ```shell
-sha256sum <tarball-file-path> > /var/www/html/<model-id>.checksum
+sha256sum <name-of-model-tar-ball> /var/www/html/<model-id>.checksum
 
 Example
 sha256sum models--ibm-granite--granite-3.2-8b-instruct.tar.gz > /var/www/html/models--ibm-granite--granite-3.2-8b-instruct.checksum

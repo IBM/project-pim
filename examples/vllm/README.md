@@ -23,7 +23,7 @@ config-json = """
         "llmImage": "na.artifactory.swg-devops.com/sys-pcloud-docker-local/devops/pim/apps/vllm",
         "llmArgs": "--model ibm-granite/granite-3.2-8b-instruct --max-model-len=26208 --enable-auto-tool-choice --tool-call-parser granite",
         "llmEnv": "OMP_NUM_THREADS=16",
-        "modelSource": { "url": "http://<ip>/models--ibm-granite--granite-3.2-8b-instruct.tar.gz" }
+        "modelSource": { "url": "http://<Host/ip>/models--ibm-granite--granite-3.2-8b-instruct.tar.gz" }
   }
   """
 ```
@@ -71,7 +71,7 @@ cp <tarball-file-path> /var/www/html
 Example
 cp models--ibm-granite--granite-3.2-8b-instruct.tar.gz /var/www/html
 ```
-**Step 5: Generate a checksum for the tarball**
+**Step 5: Generate a checksum of the tarball**
 - The checksum will be used to verify the integrity of the file after it is downloaded..
 ```shell
 sha256sum <name-of-model-tar-ball> /var/www/html/<model-id>.checksum
@@ -82,6 +82,6 @@ sha256sum models--ibm-granite--granite-3.2-8b-instruct.tar.gz > /var/www/html/mo
 
 **Step 6: Form the URL to access the model tarball**
 ```shell
-http://<ip>/models--ibm-granite--granite-3.2-8b-instruct.tar.gz
+http://<Host/ip>/models--ibm-granite--granite-3.2-8b-instruct.tar.gz
 ```
 Use the above URL in modelSource.url parameter to download model from the local server.

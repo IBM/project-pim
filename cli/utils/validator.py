@@ -326,7 +326,7 @@ def validate_host_config(config, cookies, system_uuid):
     
     soup = BeautifulSoup(response.text, 'xml')
     fw_version = soup.find("SystemFirmware").text
-    supported_versions = ["FW1110.00", "FW1050.50", "FW1060.50"]
+    supported_versions = ["FW1110.00", "FW1050.50"]
     for supported_version in supported_versions:
         if supported_version in fw_version:
             return True

@@ -320,7 +320,7 @@ def validate_host_config(config, cookies, system_uuid):
     headers = {"x-api-key": util.get_session_key(config)}
     response = requests.get(url, headers=headers, cookies=cookies, verify=False)
     if response.status_code != 200:
-        logger.error(f"failed to get hmc version: {response.text}")
+        logger.error(f"failed to get system firmware version: {response.text}")
         return
 
     
@@ -330,5 +330,5 @@ def validate_host_config(config, cookies, system_uuid):
     for supported_version in supported_versions:
         if supported_version in fw_version:
             return True
-    logger.error(f"Got firmware version as '{fw_version}', supported versions: '{supported_versions}'")
+    logger.error(f"Got system firmware version as '{fw_version}', supported versions: '{supported_versions}'")
     return False

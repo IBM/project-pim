@@ -77,6 +77,7 @@ def download_file_from_url(url, file_path, checksum):
             raise Exception("Mismatch in the checksum value")
     except requests.exceptions.RequestException as e:
         logger.error(f"error during download: {e}")
+        raise e
 
 
 def extract_tar_file(file_path, extract_path):

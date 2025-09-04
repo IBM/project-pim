@@ -8,6 +8,7 @@ from cli.utils.common import *
 from cli.utils.string_util import *
 
 logger = get_logger("validator")
+supported_versions = ["FW1110.00", "FW1050.50"]
 
 def validate_config(config):
     is_mandatory_param_valid = validate_mandatory_params(config)
@@ -323,12 +324,11 @@ def validate_host_config(config, cookies, system_uuid):
         logger.error(f"failed to get system firmware version: {response.text}")
         return
 
-    
     soup = BeautifulSoup(response.text, 'xml')
     fw_version = soup.find("SystemFirmware").text
-    supported_versions = ["FW1110.00", "FW1050.50"]
+
     for supported_version in supported_versions:
         if supported_version in fw_version:
             return True
-    logger.error(f"Got system firmware version as '{fw_version}', supported versions: '{supported_versions}'")
+    logger.error(f"Unsupported firmware version: '{fw_version}', supported versions: '{supported_versions}'")
     return False

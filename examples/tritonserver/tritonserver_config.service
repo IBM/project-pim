@@ -5,7 +5,7 @@ After=network-online.target cloud-config.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/env /bin/bash /usr/bin/fraud_detection_config.sh
+ExecStart=/usr/bin/env /bin/bash /usr/bin/tritonserver_config.sh
 RemainAfterExit=yes
 TimeoutSec=0 
 

@@ -1,0 +1,8 @@
+FROM na.artifactory.swg-devops.com/sys-pcloud-docker-local/devops/pim/base
+
+COPY fraud_detection_config.sh /usr/bin/
+COPY fraud_detection_config.service /etc/systemd/system
+RUN systemctl unmask fraud_detection_config.service
+RUN systemctl enable fraud_detection_config.service
+
+COPY fraud-detection.container /usr/share/containers/systemd

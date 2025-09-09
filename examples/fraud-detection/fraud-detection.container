@@ -1,0 +1,23 @@
+[Unit]
+Description=Run fraud detection application using onnx runtime
+Requires=fraud_detection_config.service
+After=fraud_detection_config.service
+
+[Service]
+Restart=on-failure
+RestartSec=60
+EnvironmentFile=/etc/pim/fraud_detection.conf
+EnvironmentFile=/etc/pim/env.conf
+
+[Container]
+Image=na.artifactory.swg-devops.com/sys-linux-power-team-ftp3distro-docker-images-docker-local/tritonserver:latest
+ContainerName=tritonserver
+EnvironmentFile=/etc/pim/fraud_detection.conf
+Network=host
+PublishPort=8000-8002:8000-8002
+Volume=/var/models/model_repository:/models:Z
+Exec=/bin/sh -c 'tritonserver --model-repository=/models --'
+SecurityLabelType=unconfined_t
+
+[Install]
+WantedBy=multi-user.target default.target

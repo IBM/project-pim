@@ -1,5 +1,5 @@
 [Unit]
-Description=Run fraud detection application using onnx runtime
+Description=Run tritonserver with ONNX runtime to serve deep learning/machine learning models
 Requires=tritonserver_config.service
 After=tritonserver_config.service
 

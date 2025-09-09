@@ -1,0 +1,15 @@
+[Unit]
+Description=Mount and setup fraud detection config
+Requires=network-online.target cloud-config.target
+After=network-online.target cloud-config.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env /bin/bash /usr/bin/fraud_detection_config.sh
+RemainAfterExit=yes
+TimeoutSec=0 
+
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target default.target

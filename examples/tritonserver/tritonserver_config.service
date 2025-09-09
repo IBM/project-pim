@@ -1,5 +1,5 @@
 [Unit]
-Description=Mount and setup fraud detection config
+Description=Mount and setup triton server config
 Requires=network-online.target cloud-config.target
 After=network-online.target cloud-config.target
 

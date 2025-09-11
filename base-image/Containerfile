@@ -1,5 +1,4 @@
-# quay.io/fedora/fedora-bootc:43-ppc64le built on Sep 9 2025
-FROM quay.io/fedora/fedora-bootc@sha256:255a49c3e1011670b8b039276de3fe8bef5e7c1de5f06f6fb9d1dd8a6084d600
+FROM quay.io/fedora/fedora-bootc:43
 
 RUN dnf -y install cloud-init && \
     ln -s ../cloud-init.target /usr/lib/systemd/system/default.target.wants && \

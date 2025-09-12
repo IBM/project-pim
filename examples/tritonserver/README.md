@@ -1,7 +1,7 @@
 # Triton
 
 Triton inference server can be used to serve machine learning or deep learning models like classification, regression etc on CPU/GPU platforms.
-Steps to build Triton inference server on top of base image are [here](../../base-image/)
+Triton inference server is built on top of base image [here](../../base-image/)
 
 ### Config
 Since triton server can be used to serve many ML inferencing applications like fraud detection, iris classification and many more, provided below configurations to tune the triton server as per the AI use case. 
@@ -9,10 +9,10 @@ Since triton server can be used to serve many ML inferencing applications like f
 This can be fed into the application via `config-json` explained [here](../../docs/configuration-guide.md#ai)
 
 #### modelSource
-A URL that specifies the source for the model corresponding to an AI usecase like fraud detection.
+A URL that specifies the source for the model corresponding to an AI usecase like fraud detection. Make sure to upload the trained model file on http server
 
 #### configSource
-A URL that specifies the source for the config file corresponding to an AI usecase like fraud detection.
+A URL that specifies the source for the config file corresponding to an AI usecase like fraud detection. Make sure to upload the config file specific to AI application on http server
 
 **Sample config:**
 ```ini

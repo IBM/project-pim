@@ -9,4 +9,4 @@ Use [script](build_and_train.sh) to generate fraud detection container image and
 bash build_and_train.sh fraud_detection
 ```
 
-After the successful execution, **model.onnx** file will be available on the path `<current_dir>/ai-demos/01_Fraud_Detection/model.onnx`
+After the successful execution, **model.onnx** file will be available on the path `<current_script_dir>/model_repository/fraud/1/model.onnx`

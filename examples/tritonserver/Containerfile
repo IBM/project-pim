@@ -1,0 +1,8 @@
+FROM na.artifactory.swg-devops.com/sys-pcloud-docker-local/devops/pim/base
+
+COPY tritonserver_config.sh /usr/bin/
+COPY tritonserver_config.service /etc/systemd/system
+RUN systemctl unmask tritonserver_config.service
+RUN systemctl enable tritonserver_config.service
+
+COPY tritonserver.container /usr/share/containers/systemd

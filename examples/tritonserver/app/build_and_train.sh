@@ -11,19 +11,21 @@ app=$1
 git clone https://github.com/PDeXchange/ai-demos/
 cd ai-demos/
 
+echo "find the app directory"
 app_dir=$(find . -maxdepth 1 -type d -iname "*$app*" | head -n 1)
+echo "app dir: $app_dir"
 if [ -d "$app_dir" ]; then
-    cd "$app_dir" || echo "failed to find the app: $app"; return
+    cd "$app_dir" || return
 fi
 
+echo "Build build_env container image"
 # Build container image for the app
-podman build . -t localhost/$app
+podman build . -t localhost/build_env
 
+mkdir -p $(pwd)/model_repository
+echo "Train the model using build_env container"
 # Run the app image to generate the model file
-podman run --rm --name fraud-analytics -v model_repository:/fraud_detection/model_repository localhost/$app
+podman run --rm --name fraud-detection -v $(pwd):/fraud_detection:Z -v $(pwd)/model_repository:/fraud_detection/model_repository localhost/build_env
 
-model_vol_path=$(podman volume inspect model_repository | grep "Mountpoint" | awk -F'"' '{print $4}'
-model_path=$(find $model_vol_path -iname model.onnx)
-echo "model file path: $model_path"
-
-cp $model_path ./
+echo "Model has been trained successfuly and available at: $(pwd)/model_repository/fraud/1"
+exit 0

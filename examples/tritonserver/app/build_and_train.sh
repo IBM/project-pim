@@ -25,7 +25,8 @@ podman build . -t localhost/build_env
 mkdir -p $(pwd)/model_repository
 echo "Train the model using build_env container"
 # Run the app image to generate the model file
-podman run --rm --name fraud-detection -v $(pwd):/fraud_detection:Z -v $(pwd)/model_repository:/fraud_detection/model_repository localhost/build_env
+podman run --rm  --name $app -v $(pwd):/app:Z -v $(pwd)/model_repository:/app/model_repository \
+        --entrypoint="/bin/sh" localhost/build_env -c "cd /app && make train && make prepare"
 
 echo "Model has been trained successfuly and available at: $(pwd)/model_repository/fraud/1"
 exit 0

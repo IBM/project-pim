@@ -3,30 +3,44 @@
 Triton inference server can be used to serve machine learning or deep learning models like classification, regression etc on CPU/GPU platforms.
 Triton inference server is built on top of base image [here](../../base-image/)
 
-### Config
-Since triton server can be used to serve many ML inferencing applications like fraud detection, iris classification and many more, provided below configurations to tune the triton server as per the AI use case. 
+## Steps to setup e2e inference flow
 
-This can be fed into the application via `config-json` explained [here](../../docs/configuration-guide.md#ai)
-
-#### modelSource
-A URL that specifies the source for the model corresponding to an AI usecase like fraud detection. Make sure to upload the trained model file on http server
-
-#### configSource
-A URL that specifies the source for the config file corresponding to an AI usecase like fraud detection. Make sure to upload the config file specific to AI application on http server
-
-**Sample config:**
-```ini
-config-json = """
-  {
-        "modelSource": "http://<Domain>/fraud_detection/model.onnx",
-        "configSource": "http://<Domain>/fraud_detection/config.pbtxt"
-  }
-  """
+## Step 1: Building the images
+Build container image for AI example application covered in [ai-demos](https://github.com/PDeXchange/ai-demos) using [build-steps](app/README.md)
+To reuse the built container image, push the built image to container registry.
+```shell
+podman push <registry>/build_env
 ```
 
+## Step2: Train the model
+Model with ONNX runtime can be trained by running the container image built in Step 1. Follow the [training steps](app/README.md)
+After the successful training completion, model(mode.onnx) and config(config.pbtxt) files will be available in path **<current_dir>/app/model_repository/fraud**
+
+### Setting up PIM partition
+Follow this [deployer section](../../README.md#deployer-steps) to setup PIM cli, configuring your AI partition and launching it.
+
+Regarding configuration of AI application served from triton server, user need to provide generated model artifacts like model file and config file to the PIM partition as shown below in `ai.config-json` section.
+```ini
+  config-json = """
+  {
+    "modelSource": "http://<Host/IP>/fraud_detection/model.onnx",
+    "configSource": "http://<Host/IP>/fraud_detection/config.pbtxt"
+  }
+```
+Both of the model files will be available in `<current_dir>/app/model_repository/fraud` dir on the machine wher you have trained the model. Store these files in a simple HTTP server and pass the URI path to the PIM partition like above.
+
+#### Steps to start http server and copy the model artifacts
+```shell
+# Install httpd
+yum install httpd -y
+systemctl enable httpd
+systemctl start httpd
+# Move artifacts
+mv /opt/artifacts/* /var/www/html/fraud_artifacts
+```
 
 ### Validate AI application functionality
-To verify AI example application served from Triton server, perform below speicifed configurations in [config.ini](../../config.ini).  
+To verify AI example application served from Triton server, Apply below speicifed configurations in [config.ini](../../config.ini).  
 Sample JSON payload is provided for fraud detection usecase. Feed the appropriate JSON payload specific to AI example app to be served from triton.
 
 ```ini
@@ -78,7 +92,28 @@ Sample JSON payload is provided for fraud detection usecase. Feed the appropriat
     """
 ```
 
-### Build
+Once PIM partition is deployed with triton server serving the model of configured AI application(fraud-detection in the example above), you will get to observe the output as below
+```json
+{
+  "model_name":"fraud",
+  "model_version":"1",
+  "outputs":[
+  {
+    "name":"label",
+    "datatype":"INT64",
+    "shape":[1,1],
+    "data":[1]
+  },
+  {
+    "name":"probabilities",
+    "datatype":"FP32",
+    "shape":[1,2],
+    "data":[4.172325134277344e-7,0.9999995827674866]
+  }]
+}
+```
+
+### Build PIM triton server
 **Step 1: Build Base image**
 Follow the steps provided [here](../../base-image/README.md) to build the base image.
 

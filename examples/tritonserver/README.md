@@ -27,7 +27,7 @@ Regarding configuration of AI application served from triton server, user need t
     "configSource": "http://<Host/IP>/fraud_detection/config.pbtxt"
   }
 ```
-Both of the model files will be available in `<current_dir>/app/model_repository/fraud` dir on the machine wher you have trained the model. Store these files in a simple HTTP server and pass the URI path to the PIM partition like above.
+Both of the model files will be available in `<current_dir>/model_repository/fraud` dir on the machine wher you have trained the model. Store these files in a simple HTTP server and pass the URI path to the PIM partition like above.
 
 #### Steps to start http server and copy the model artifacts
 ```shell
@@ -35,8 +35,10 @@ Both of the model files will be available in `<current_dir>/app/model_repository
 yum install httpd -y
 systemctl enable httpd
 systemctl start httpd
-# Move artifacts
-mv /opt/artifacts/* /var/www/html/fraud_artifacts
+# Copy AI app specific artifacts like model file and model config file
+mkdir -p /var/www/html/fraud_detection/
+cp <current_dir>/model_repository/fraud/config.pbtxt /var/www/html/fraud_detection/
+cp <current_dir>/model_repository/fraud/1/model.onnx /var/www/html/fraud_detection/
 ```
 
 ### Validate AI application functionality

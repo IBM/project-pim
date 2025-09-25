@@ -45,7 +45,7 @@ To get started, you can follow steps below to build and deploy a simple entity e
         - Scripts and README to build the AI image are given [here](examples/simple-entity-extraction/README.md), ensure that you use the vLLM AI image created in the previous step as base image(FROM) here.
 ### Deployer steps
 - **Step 1: Set up PIM**
-    - You can follow the steps to set up PIM on your IBMi/Linux machine given [here](docs/deployer-guide.md#installation).
+    - You can follow the steps to set up PIM on your IBMi/Linux machine given [here](docs/deployer-guide.md#installation) and please go over the [Prerequisites](docs/deployer-guide.md#prerequisites) section here before deploying a AI partition.
 - **Step 2: Configure your AI partition**
     - Read through this [guide](docs/configuration-guide.md) and fill appropriate values in [config.ini](config.ini).
     - Use final image built on builder step 4 in `ai.image` field.

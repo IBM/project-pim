@@ -106,21 +106,28 @@ def _launch(config, cookies, sys_uuid, vios_uuids):
         b_scsi_exists, _, _ = command_util.check_if_scsi_mapping_exist(
             partition_uuid, vios_payload, vopt_bootstrap)
         if not b_scsi_exists:
+            logger.debug(f"Bootstrap ISO not attached to the partition yet. attaching it")
             if vios_cloudinit_media_uuid == vios_bootstrap_media_uuid:
+                logger.debug(f"Attaching both bootstrap and cloud init ISOs to the partition")
                 vopt.attach_vopt(vios_payload, config, cookies,
                                  partition_uuid, sys_uuid, vios_bootstrap_media_uuid, "")
                 cloud_init_attached = True
+                logger.debug("Attached both bootstrap and cloud init ISO to the partition")
             else:
                 vopt.attach_vopt(vios_payload, config, cookies, partition_uuid,
                                  sys_uuid, vios_bootstrap_media_uuid, vopt_bootstrap)
+                logger.debug("Attached bootstrap ISO to the partition")
         if not cloud_init_attached:
+            logger.debug("Cloud init ISO not attached along with the bootstrap ISO")
             vios_cloudinit_payload = vios_operation.get_vios_details(
                 config, cookies, sys_uuid, vios_cloudinit_media_uuid)
             c_scsi_exists, _, _ = command_util.check_if_scsi_mapping_exist(
                 partition_uuid, vios_cloudinit_payload, vopt_cloud_init)
             if not c_scsi_exists:
+                logger.debug("Cloud init ISO not attached to the partition yet, attaching it")
                 vopt.attach_vopt(vios_cloudinit_payload, config, cookies, partition_uuid,
                                  sys_uuid, vios_cloudinit_media_uuid, vopt_cloud_init)
+                logger.debug("Attached cloud init ISO to the partition")
 
         logger.info("Installation ISOs attached to the partition")
 

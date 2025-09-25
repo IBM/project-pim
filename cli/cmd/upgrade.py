@@ -38,7 +38,7 @@ def _upgrade(config):
         ssh_client = common.ssh_to_partition(config)
 
         logger.info(f"Updating PIM partition's '{bootc_auth_json}' with the latest one provided")
-        auth_json = util.get_auth_json(config)
+        auth_json = "{}" if util.get_auth_json(config) == "" else util.get_auth_json(config)
         sftp_client = ssh_client.open_sftp()
         with sftp_client.open("/tmp/auth.json", 'w') as f:
             f.write(auth_json)

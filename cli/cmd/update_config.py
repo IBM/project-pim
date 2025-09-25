@@ -60,7 +60,7 @@ def _update_config(config, cookies, sys_uuid, vios_uuid_list):
             shutil.rmtree(common.cloud_init_update_config_dir)
             return
         logger.info("Detected config change, updating")
-        iso_util.generate_cloud_init_iso_file(common.cloud_init_update_config_dir, config, common.cloud_init_update_config_dir)
+        iso_util.generate_cloud_init_iso_file(common.update_iso_dir, config, common.cloud_init_update_config_dir)
 
         logger.info("Shutting down the partition")
         activation.shutdown_partition(config, cookies, partition_uuid)
@@ -68,7 +68,7 @@ def _update_config(config, cookies, sys_uuid, vios_uuid_list):
 
         cloud_init_iso = util.get_cloud_init_iso(config)
         logger.info("Uploading the new cloud init with the config changes")
-        vios_cloudinit_media_uuid = iso_util.upload_iso_to_media_repository(config, cookies, common.cloud_init_update_config_dir, cloud_init_iso, sys_uuid, vios_uuid_list)
+        vios_cloudinit_media_uuid = iso_util.upload_iso_to_media_repository(config, cookies, common.update_iso_dir, cloud_init_iso, sys_uuid, vios_uuid_list)
         logger.debug("Cloud init uploaded")
         
         logger.info("Attaching the cloud init to the partition")
@@ -84,7 +84,7 @@ def _update_config(config, cookies, sys_uuid, vios_uuid_list):
         monitor_util.monitor_pim(config)
 
         # Move used cloud init iso to iso dir
-        shutil.move(f"{common.cloud_init_update_config_dir}/{cloud_init_iso}", f"{common.iso_dir}/{cloud_init_iso}")
+        shutil.move(f"{common.update_iso_dir}/{cloud_init_iso}", f"{common.iso_dir}/{cloud_init_iso}")
         
         # Cleanup existing config and move updated config
         shutil.rmtree(common.cloud_init_config_dir)

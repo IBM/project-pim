@@ -63,7 +63,7 @@ def remove_vopt_device(config, cookies, vios, vopt_name):
 
         if not found:
             logger.debug(f"vOPT device '{vopt_name}' is not present in media repository")
-            return
+            return False
 
         headers = {"x-api-key": util.get_session_key(
             config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
@@ -73,13 +73,13 @@ def remove_vopt_device(config, cookies, vios, vopt_name):
         if response.status_code != 200:
             logger.error(
                 f"failed to update volume group after deleting vOPT device from media repository, error: {response.text}")
-            return
+            return False
 
         logger.debug(
             f"Virtual optical media '{vopt_name}' has been deleted successfully")
     except Exception as e:
         raise e
-    return
+    return True
 
 
 def remove_virtual_disk(config, cookies, vios_uuid, vg_id, vdisk_name):

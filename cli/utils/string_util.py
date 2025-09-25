@@ -23,7 +23,7 @@ def get_bootstrap_iso(config):
     return hashlib.sha256(get_bootstrap_iso_download_url(config).encode()).hexdigest()[:32] + "_pimb"
 
 def get_cloud_init_iso(config):
-    return get_partition_name(config).lower() + "_pimc"
+    return hashlib.sha256(get_partition_name(config).encode()).hexdigest()[:32] + "_pimc"
 
 # partition related Getters
 def get_desired_memory(config):

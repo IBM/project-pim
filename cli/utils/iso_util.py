@@ -18,7 +18,6 @@ logger = common.get_logger("iso")
 
 
 def build_and_download_iso(config, slot_num, iso_dir, config_dir):
-    common.create_dir(iso_dir)
     generate_cloud_init_iso_config(config, slot_num, config_dir)
     generate_cloud_init_iso_file(iso_dir, config, config_dir)
     download_bootstrap_iso(iso_dir, config)
@@ -55,6 +54,8 @@ def generate_cloud_init_iso_config(config, slot_num, config_dir):
 
 def generate_cloud_init_iso_file(iso_dir, config, config_dir):
     logger.debug("Generating cloud-init ISO file")
+    common.create_dir(iso_dir)
+
     cloud_init_image_name = get_cloud_init_iso(config)
     generate_cmd = f"mkisofs -l -o {iso_dir}/{cloud_init_image_name} {config_dir}"
 
@@ -169,7 +170,37 @@ def upload_iso_to_media_repository(config, cookies, iso_dir, iso_file_name, sys_
         uploaded, vios_uuid = is_iso_uploaded(
             config, cookies, iso_file_name, sys_uuid, vios_uuid_list)
         if uploaded:
+            logger.debug(f"Bootstrap ISO already uploaded to VIOS '{vios_uuid}'")
             return vios_uuid
+    if "_pimc" in iso_file_name:
+        exists, _, lpar_uuid = partition.check_partition_exists(config, cookies, sys_uuid)
+        # Re-run scenario: If lpar is already activated but launch flow failed during monitoring or app_check stage in previous run. Skip reupload of cloudinit iso 
+        if exists:
+            lpar_state = activation.check_lpar_status(config, cookies, lpar_uuid)
+            if lpar_state == "running":
+                logger.debug(f"Partition already in 'running' state, skipping reupload of cloud-init ISO '{iso_file_name}'")
+                uploaded, vios_uuid = is_iso_uploaded(config, cookies, iso_file_name, sys_uuid, vios_uuid_list)
+                if uploaded:
+                    logger.debug(f"Cloud init found in VIOS '{vios_uuid}'")
+                    return vios_uuid
+            logger.debug("Partition not in running state, hence removing the existing dev and scsi mapping to reupload and attach the cloud init ISO")
+            for vios_id in vios_uuid_list:
+                logger.debug(f"Processing vios '{vios_id}' to remove pimc mapping and vopt")
+
+                vios = vios_operation.get_vios_details(
+                    config, cookies, sys_uuid, vios_id)
+                # remove SCSI mapping from VIOS
+                command_util.remove_scsi_mappings(
+                    config, cookies, sys_uuid, lpar_uuid, vios_id, vios, iso_file_name)
+                
+                vios = vios_operation.get_vios_details(
+                    config, cookies, sys_uuid, vios_id)
+                
+                # Delete existing cloud-init vOPT with same name if already loaded in VIOS media repository
+                if command_util.remove_vopt_device(
+                    config, cookies, vios, iso_file_name):
+                    logger.debug(f"Removed cloud init ISO's scsi mapping and device from media repository of VIOS '{vios_id}'")
+                    break
 
     logger.debug(
         f"Uploading ISO file '{iso_dir}/{iso_file_name} to VIOS media repository")
@@ -177,30 +208,8 @@ def upload_iso_to_media_repository(config, cookies, iso_dir, iso_file_name, sys_
     # If upload operation fails for current VIOS, next available VIOS in the list will be used as a fallback.
     file_uuid = ""
     for index, vios_uuid in enumerate(vios_uuid_list):
+        logger.debug(f"Processing '{iso_file_name}' to upload in VIOS '{vios_uuid}'")
         try:
-            # Re-run scenario: If lpar is already activated but launch flow failed during monitoring or app_check stage in previous run. Skip reupload of cloudinit iso
-            if "_pimc" in iso_file_name:
-                exists, _, lpar_uuid = partition.check_partition_exists(
-                    config, cookies, sys_uuid)
-                if exists:
-                    lpar_state = activation.check_lpar_status(
-                        config, cookies, lpar_uuid)
-                    if lpar_state == "running":
-                        logger.debug(
-                            f"Partition already in 'running' state, skipping reupload of cloud-init ISO '{iso_file_name}'")
-                        return vios_uuid
-
-                    vios = vios_operation.get_vios_details(
-                        config, cookies, sys_uuid, vios_uuid)
-
-                    # remove SCSI mapping from VIOS
-                    command_util.remove_scsi_mappings(
-                        config, cookies, sys_uuid, lpar_uuid, vios_uuid, vios, iso_file_name)
-
-                    # Delete existing cloud-init vOPT with same name if already loaded in VIOS media repository
-                    command_util.remove_vopt_device(
-                        config, cookies, vios, iso_file_name)
-
             # Create ISO filepath for bootstrap iso
             iso_file = iso_dir + "/" + iso_file_name
             iso_checksum = common.file_checksum(iso_file)
@@ -214,6 +223,7 @@ def upload_iso_to_media_repository(config, cookies, iso_dir, iso_file_name, sys_
 
             # remove iso files from VIOS
             remove_iso_file(config, cookies, iso_file, file_uuid)
+            logger.debug(f"Uploaded '{iso_file_name}' to vios '{vios_uuid}'")
             return vios_uuid
         except Exception as e:
             logger.error(f"failed to upload ISO to '{vios_uuid}' VIOS")

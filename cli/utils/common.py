@@ -21,6 +21,7 @@ clidir = getclidir()
 PARTITION_FLAVOR_DIR = f"{clidir}/partition-flavor"
 keys_path = clidir + "/keys"
 iso_dir = clidir + "/iso"
+update_iso_dir = clidir + "/update-iso"
 cloud_init_config_dir =  clidir + "/cloud-init-iso/config"
 cloud_init_update_config_dir =  clidir + "/cloud-init-iso/update-config"
 

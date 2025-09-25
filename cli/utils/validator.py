@@ -8,7 +8,7 @@ from cli.utils.common import *
 from cli.utils.string_util import *
 
 logger = get_logger("validator")
-supported_versions = ["FW1110.00", "FW1050.50"]
+supported_versions = ["1110.01", "1110.00", "1060.51", "1060.50", "1050.51",  "1050.50"]
 
 def validate_config(config):
     is_mandatory_param_valid = validate_mandatory_params(config)
@@ -174,7 +174,7 @@ def validate_prefix_length(config):
 
 # Validating partition is in correct format
 def validate_partition_name(config):
-    pattern = r"^[A-Za-z0-9_\.]{1,79}$"
+    pattern = r"^[^()\<>*\$&?\|\[\]'\"`]{1,47}$"
     result = re.match(pattern, get_partition_name(config))
     if not bool(result):
         logger.error(f"validation failed: 'partition.name' value '{get_partition_name(config)}' have invalid format.")

@@ -1,5 +1,7 @@
 [Unit]
 Description=Run fraud analytics app
+Requires=fraud_analytics_config.service
+After=fraud_analytics_config.service
 
 [Service]
 Restart=on-failure
@@ -9,6 +11,7 @@ EnvironmentFile=/etc/pim/env.conf
 [Container]
 Image=quay.io/<account id>/pim:fraud-analytics
 Network=host
+Volume=/etc/pim/models:/opt/models
 SecurityLabelType=unconfined_t
 AutoUpdate=registry
 

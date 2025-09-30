@@ -78,15 +78,17 @@ train_model() {
       cd "$app_dir" || return
   fi
 
+  mkdir -p $(pwd)/model_repository
+
   echo "Train the model using $CONTAINER_IMAGE container"
   # Run the app image to generate the model file
-  podman run --rm  --name $APP -v $(pwd):/app:Z -v $(pwd)/model_repository:/app/model_repository \
+  podman run --rm --name $APP -v $(pwd):/app:Z -v $(pwd)/model_repository:/app/model_repository \
           --entrypoint="/bin/sh" $CONTAINER_IMAGE -c "cd /app && make train && make prepare" || { echo "Failed to train the model for $APP" >&2; exit 1; }
-  echo "Model has been trained successfuly and available at path: $(pwd)/model_repository/fraud/1"
+  echo "Model has been trained successfuly and available at: $(pwd)/model_repository/fraud/1"
 
-  echo "Generating model configuration file"
-  make generate-config || { echo "Failed to generate model configuration for $APP" >&2; exit 1; }
-  echo "Model config file is available at path: $(pwd)/model_repository/fraud"
+  echo "Generate model config file for app: $APP"
+  make generate-config || { echo "Failed to generate model config.pbtxt file for $APP" >&2; exit 1; }
+  echo "Model config file config.pbtxt has been generated for app: $APP"
 }
 
 # If no subcommands or args passed, display help

@@ -4,6 +4,12 @@
 Users can deploy AI workloads of their choice of model and configuration by supplying the trained model file(model.onnx) and configuration file (config.pbtxt) to http server to be used by Triton server when its run on a PIM partition.
 
 ## Fraud detection usecase with ONNX runtime
+### Pre-requisites
+Below mentioned pre-requisites are needed to build container image for fraud detection example
+- podman
+- container registry to push the built fraud detection container image
+- protobuf
+
 ### Build fraud detection container image
 The [script](build_and_train.sh) builds the base container image for the AI example applications given in [ai-demos](https://github.com/PDeXchange/ai-demos). AI application name for which container image to be built is given as an argument to the script.
 ```shell

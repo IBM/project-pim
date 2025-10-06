@@ -9,7 +9,7 @@ RestartSec=60
 EnvironmentFile=/etc/pim/env.conf
 
 [Container]
-Image=na.artifactory.swg-devops.com/sys-linux-power-team-ftp3distro-docker-images-docker-local/tritonserver:latest
+Image=quay.io/powercloud/tritonserver:latest
 ContainerName=tritonserver
 EnvironmentFile=/etc/pim/tritonserver.conf
 Network=host

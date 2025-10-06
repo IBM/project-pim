@@ -1,9 +1,9 @@
-FROM quay.io/<account id>/pim:base
+FROM quay.io/powercloud/pim:base
 
-COPY vllm/llm_config.sh /usr/bin/
-COPY utility/download_model.py /usr/bin/
-COPY vllm/llm_config.service /etc/systemd/system
+COPY llm_config.sh /usr/bin/
+COPY download_model.py /usr/bin/
+COPY llm_config.service /etc/systemd/system
 RUN systemctl unmask llm_config.service
 RUN systemctl enable llm_config.service
 
-COPY vllm/vllm.container /usr/share/containers/systemd
+COPY vllm.container /usr/share/containers/systemd

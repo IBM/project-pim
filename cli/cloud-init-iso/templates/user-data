@@ -14,13 +14,16 @@ write_files:
       {{ config["ai"]["config-json"] }}
     owner: root:root
     permissions: '0644'
+    append: false
   - path: /etc/pim/auth.json
     content: |
       {{ config["ai"]["auth-json"] }}
     owner: root:root
     permissions: '0644'
+    append: false
   - path: /etc/pim/env.conf
     content: |
       REGISTRY_AUTH_FILE=/etc/pim/auth.json
     owner: root:root
     permissions: '0644'
+    append: false

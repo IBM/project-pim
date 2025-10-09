@@ -1,4 +1,4 @@
-FROM quay.io/<account id>/pim:vllm
+FROM quay.io/powercloud/pim:vllm
 
 COPY hmc_config.sh /usr/bin
 COPY hmc_config.service /etc/systemd/system

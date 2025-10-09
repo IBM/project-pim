@@ -1,38 +1,41 @@
 # vLLM
 
-Builds vLLM inference server on top of base image built [here](../../base-image/)
+vLLM example allows you to deploy vLLM inference engine that exposes OpenAI API server on a partition which allows you to leverage the GenAI capabilities on your on prem environment.
 
-### Config
-Since vLLM AI image can be used as a base for many LLM inferencing applications like chatbot, entity extraction and many more, provided below configuration to tune the vLLM engine as per the AI use case. 
+## Architecture
+![alt text](vLLM_Arch.png)
 
-This can be fed into the application via `config-json` explained [here](../../docs/configuration-guide.md#ai)
+## Steps to setup e2e flow
 
-#### llmImage
-vLLM container image built using app section [here](app/README.md). This is given as a configurable option so that in future if there is a newer version of vLLM image available, we can just update the stack via [update-config](../../docs/deployer-guide.md#update-config)
-#### llmArgs
-Arguments you want to pass it to your vLLM inference engine
-#### llmEnv
-Environment variables that you want to set while running vLLM inference engine
-#### modelSource
-A JSON object that specifies the source from which you want to download the model. Use this parameter to use a offline model loaded within the local network instead of downloading from hugging face over the internet. This is suitable for environment which restricts outside connection. Follow the steps [here](#steps-to-set-up-a-server-to-host-an-llm-model-locally) to bring up self-hosted HTTP server which serves the offline models.
+### Step 1: Preparing the images
 
-**Sample config:**
-```ini
-config-json = """
-  {
-        "llmImage": "quay.io/<account id>/pim:vllm-app",
-        "llmArgs": "--model ibm-granite/granite-3.2-8b-instruct --max-model-len=26208 --enable-auto-tool-choice --tool-call-parser granite",
-        "llmEnv": "OMP_NUM_THREADS=16",
-        "modelSource": { "url": "http://<Host/ip>/models--ibm-granite--granite-3.2-8b-instruct.tar.gz" }
-  }
-  """
+#### Use Pre-built images
+##### Application Image
+- Container image that can run vLLM's OpenAI API server 
+- Recommended to use the vLLM application image built by IBM Linux on Power team. Image details are updated over a blog post [here](https://community.ibm.com/community/user/blogs/priya-seth/2023/04/05/open-source-containers-for-power-in-icr)
 ```
+icr.io/ppc64le-oss/vllm-ppc64le:0.10.1.dev852.gee01645db.d20250827
+```
+##### PIM Bootc Image
+- Bootc image to bringup the AI partition that can run the above vLLM application container.
+- Recommended to use the pre-built PIM Bootc image and its available to consume directly via below image.
+```
+quay.io/powercloud/pim:vllm
+``` 
 
-### Build
-**Step 1: Build Base image**
-Follow the steps provided [here](../../base-image/README.md) to build the base image.
+#### Build from source
+If you wish to build your own version, you can follow below steps to build it.
 
-**Step 2: Build vLLM image**
+##### Step 1: Build Application image
+
+Follow the instructions in the [README](app) to build the vLLM application's container image. It has a script that pulls open-source vLLM code base and builds a container image.
+
+##### Step 2: Build PIM Base image
+
+Follow the steps provided [here](../../base-image) to build the base image or use the pre-built base-image `quay.io/powercloud/pim:base`
+
+##### Step 3: Build PIM Bootc image
+
 Ensure to replace the `FROM` image in [Containerfile](Containerfile) with the base image you have built before building this image.
 
 ```shell
@@ -41,47 +44,32 @@ podman build -t <your registry>/pim:vllm
 podman push <your registry>/pim:vllm
 ```
 
+### Step 2: Setting up PIM partition
 
-### Steps to Set Up a Server to Host an LLM Model Locally
-**Step 1: Download the model using Hugging Face CLI**
-```shell
-pip install huggingface_hub
+Follow this [deployer guide](../../docs/deployer-guide.md) to setup PIM cli, configuring your AI partition and launching it.
+Regarding the configuration of your vLLM application, below configs are supported. Please read through them and use them as per your requirement in config file detailed in deployer guide.
 
-huggingface-cli download  <model-id>
+#### llmImage
+- Use `llmImage` param to pass the vLLM application's container image to be used in your AI partition. 
+- Look at the image section [here](#step-1-preparing-the-images) to decide the image to be used.
+- This is given as a configurable option so that in future if there is a newer version of vLLM image available, we can just update the stack via [update-config](../../docs/deployer-guide.md#update-config)
+#### llmArgs
+- Arguments you want to pass it to your vLLM inference engine
+#### llmEnv
+- Environment variables that you want to set while running vLLM inference engine
+#### modelSource
+- A JSON object that specifies the source from which you want to download the model. 
+- Use this parameter to use a offline model loaded within the local network instead of downloading from hugging face over the internet. This is suitable for environment which restricts outside connection. 
+- Follow the steps [here](local-model-server.md) to bring up self-hosted HTTP server which serves the offline models.
 
-Example: 
-huggingface-cli download ibm-granite/granite-3.2-8b-instruct
+**Sample config:**
+```ini
+config-json = """
+  {
+        "llmImage": "icr.io/ppc64le-oss/vllm-ppc64le:0.10.1.dev852.gee01645db.d20250827",
+        "llmArgs": "--model ibm-granite/granite-3.3-8b-instruct --max-model-len=8192 --max-num-batched-tokens=8192",
+        "llmEnv": "OMP_NUM_THREADS=16,VLLM_CPU_OMP_THREADS_BIND=all",
+        "modelSource": { "url": "http://<Host/ip>/models--ibm-granite--granite-3.2-8b-instruct.tar.gz" }
+  }
+  """
 ```
-**Step 2: Create a tarball of the downloaded model folder**
-- `model-id` should follow models--<account--model> format. Since vLLM expects in this format when it loads from the cache. 
-Example:
-`model-id` for ibm-granite/granite-3.2-8b-instruct is `models--ibm-granite--granite-3.2-8b-instruct`
-```shell
-tar -cvzf <model-id>.tar.gz <path-to-downloaded-model-directory>
-```
-**Step 3: Start an HTTP service on the server VM**
-```shell
-sudo yum install httpd
-sudo systemctl start httpd
-```
-**Step 4: Copy the tar file to the web server directory**
-```shell
-cp <tarball-file-path> /var/www/html
-
-Example
-cp models--ibm-granite--granite-3.2-8b-instruct.tar.gz /var/www/html
-```
-**Step 5: Generate a checksum of the tarball**
-- The checksum will be used to verify the integrity of the file after it is downloaded..
-```shell
-sha256sum <name-of-model-tar-ball> /var/www/html/<model-id>.checksum
-
-Example
-sha256sum models--ibm-granite--granite-3.2-8b-instruct.tar.gz > /var/www/html/models--ibm-granite--granite-3.2-8b-instruct.checksum
-```
-
-**Step 6: Form the URL to access the model tarball**
-```shell
-http://<Host/ip>/models--ibm-granite--granite-3.2-8b-instruct.tar.gz
-```
-Use the above URL in modelSource.url parameter to download model from the local server.

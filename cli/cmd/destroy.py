@@ -42,7 +42,7 @@ def _destroy(config, cookies, sys_uuid, vios_uuid_list):
 
         if created_by_pim and exists:
             logger.info("Destroying the partition")
-            partition.remove_partition(config, cookies, partition_uuid)
+            partition. remove_partition(config, cookies, partition_uuid)
             logger.info("Partition destroyed")
     except Exception as e:
         raise e

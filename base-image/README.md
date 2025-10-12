@@ -25,6 +25,16 @@ RUN dnf -y install cloud-init && \
     rm -rf /var/{cache,log} /var/lib/{dnf,rhsm}
 COPY usr/ /usr/
 ```
+Install cloud-init to configure AI image and PIM partition's network and user
+
+```Dockerfile
+COPY base_config.sh /usr/bin/
+COPY base_config.service /etc/systemd/system
+
+RUN systemctl unmask base_config.service
+RUN systemctl enable base_config.service
+```
+systemd service to setup pimconfig like copying cloud init config and pim config files to respective directory
 
 ## Build
 

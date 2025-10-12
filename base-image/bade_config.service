@@ -1,0 +1,15 @@
+[Unit]
+Description=Mount and setup pimconfig
+Before=network-online.target cloud-config.target
+Wants=network-online.target cloud-config.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env /bin/bash /usr/bin/base_config.sh
+RemainAfterExit=yes
+TimeoutSec=0 
+
+StandardOutput=journal+console
+
+[Install]
+WantedBy=cloud-config.target

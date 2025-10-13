@@ -1,16 +1,14 @@
 import shutil
 from scp import SCPClient
+import os
 
 import cli.network.virtual_network as virtual_network
-import cli.partition.activation as activation
 import cli.partition.partition as partition
 import cli.utils.monitor_util as monitor_util
-import cli.storage.vopt_storage as vopt
 import cli.utils.command_util as command_util
 import cli.utils.common as common
 import cli.utils.iso_util as iso_util
 import cli.utils.string_util as util
-import cli.vios.vios as vios
 
 
 logger = common.get_logger("pim-update-config")
@@ -61,6 +59,12 @@ def _update_config(config, cookies, sys_uuid):
             shutil.rmtree(common.cloud_init_update_config_dir)
             return
         logger.info("Detected config change, updating")
+
+        # Create pim_config.json file
+        pim_config = util.get_pim_config_json(config)
+        with open(f"{common.cloud_init_update_config_dir}/pim_config.json", "w") as config_file:
+            config_file.write(pim_config)
+
         ssh_client = common.ssh_to_partition(config)
 
         with SCPClient(ssh_client.get_transport()) as scp:
@@ -89,6 +93,10 @@ def _update_config(config, cookies, sys_uuid):
             logger.error(f"failed to restart base_config.service. error: {errorMsg}")
             raise Exception(errorMsg)
         
+        os.remove(f"{common.cloud_init_update_config_dir}/pim_config.json")
+        # Cleanup existing config and move updated config
+        shutil.rmtree(common.cloud_init_config_dir)
+        shutil.move(common.cloud_init_update_config_dir, common.cloud_init_config_dir)
         logger.info("Monitoring AI application, this will take a while")
         monitor_util.monitor_pim(config)
     except Exception as e:

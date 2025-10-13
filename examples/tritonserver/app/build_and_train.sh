@@ -12,7 +12,7 @@ cat << EOF
   This is a bash script to build the AI application container image and train its machine learning/deep learning model.
 
   Available commands:
-    build      Build the container image with an AI application name as an argument .
+    build      Build the container image for AI applications.
     train      Train a model by passing the AI application container image as an argument.
     help       Display the help message.
 
@@ -20,29 +20,12 @@ EOF
 }
 
 build_image() {
-  shift
-
-  if [ "$#" -ne 1 ]; then
-    echo "Error: 'build' command requires an argument: application_name" >&2
-    echo "Usage: $0 build <app_name>" >&2
-    exit 1
-  fi
-
-  local APP="$1"
-
   if [ ! -d "$REPO_NAME" ]; then
     echo "Cloning source code from $AI_DEMOS_REPO"
     git clone $AI_DEMOS_REPO
   fi
 
   cd $REPO_NAME
-
-  echo "find the app directory"
-  app_dir=$(find . -maxdepth 1 -type d -iname "*$APP*" | head -n 1)
-  echo "app dir: $app_dir"
-  if [ -d "$app_dir" ]; then
-      cd "$app_dir" || return
-  fi
 
   echo "Building container image: $CONTAINER_IMAGE"
   podman build . -t $CONTAINER_IMAGE
@@ -74,20 +57,23 @@ train_model() {
   echo "find the app directory"
   app_dir=$(find . -maxdepth 1 -type d -iname "*$APP*" | head -n 1)
   echo "app dir: $app_dir"
-  if [ -d "$app_dir" ]; then
-      cd "$app_dir" || return
-  fi
+  #if [ -d "$app_dir" ]; then
+  #    cd "$app_dir" || return
+  #fi
 
-  mkdir -p $(pwd)/model_repository
+  mkdir -p $(pwd)/${app_dir}/model_repository
 
   echo "Train the model using $CONTAINER_IMAGE container"
   # Run the app image to generate the model file
-  podman run --rm --name $APP -v $(pwd):/app:Z -v $(pwd)/model_repository:/app/model_repository \
-          --entrypoint="/bin/sh" $CONTAINER_IMAGE -c "cd /app && make train && make prepare" || { echo "Failed to train the model for $APP" >&2; exit 1; }
-  echo "Model has been trained successfuly and available at: $(pwd)/model_repository/fraud/1"
+  podman run --rm --name $APP -v $(pwd)/$app_dir:/app:Z -v $(pwd)/Makefile:/app/Makefile:Z \
+	  --entrypoint="/bin/sh" $CONTAINER_IMAGE -c "cd /app && make train APP=$APP"
+  echo "Model has been trained successfuly and available at: $(pwd)/model_repository/$APP/1"
+
+  # Cleanup redunduntant volume hosted directories
+  rm -rf $(pwd)/$APP/$APP
 
   echo "Generate model config file for app: $APP"
-  make generate-config || { echo "Failed to generate model config.pbtxt file for $APP" >&2; exit 1; }
+  make generate-config APP=$APP || { echo "Failed to generate model config.pbtxt file for $APP" >&2; exit 1; }
   echo "Model config file config.pbtxt has been generated for app: $APP"
 }
 

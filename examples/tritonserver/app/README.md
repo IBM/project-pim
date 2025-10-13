@@ -1,7 +1,7 @@
 # Triton server
 
 [Triton server](https://github.com/triton-inference-server/server) can be used to inference AI workloads using machine learning models. Some of pre-built example AI workloads like fraud detection, Iris classification etc are covered in the [ai-demos-repo](https://github.com/PDeXchange/ai-demos). Users can utilise them to try out the triton inference server.
-Users can deploy AI workloads of their choice of model and configuration by supplying the trained model file(model.onnx) and configuration file (config.pbtxt) to http server to be used by Triton server when its run on a PIM partition.
+Users can deploy AI workloads of their choice of model and configuration by supplying the trained model file(model.onnx) and configuration file (config.pbtxt) to http server to be used by Triton server when its run on a PIM partition. Currently tritonserver suppports serving only model tained for fraud-detection application covered in [ai-demos-repo](https://github.com/PDeXchange/ai-demos).
 
 ## Fraud detection usecase with ONNX runtime
 ### Pre-requisites

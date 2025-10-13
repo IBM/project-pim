@@ -23,12 +23,11 @@ As mentioned earlier triton inference server can be used to serve any machine le
 To show case the e2e flow of triton inference server deployment from PIM, we will be utilising the existing application [fraud-detection](https://github.com/PDeXchange/ai-demos/tree/main/02_Fraud_Detection). Please follow below steps to build the model and config file.
 
 #### Step I: Building the image
-To easily train the model with the provided python application, we have provided a Containerfile with the necessary packages, environment and tools to run the python application which can train the model for you. the source files for the python application will be volume mounted during training.
+To easily train the model with the provided python application, we have provided a Containerfile with the necessary packages, environment and tools to run the python application which can train the model for you. The source files for training the python application will be volume mounted during training to reuse the container across AI example applications.
 
 Build the container image for AI example application covered in [ai-demos](https://github.com/PDeXchange/ai-demos) using [build-steps](app/README.md)
 
-To reuse the built container image, push the built image to container registry.
-`podman push <registry>/build_env`
+To consume the already built and hosted container image use `quay.io/powercloud/build_env`
 
 #### Step II: Train the model
 Model with ONNX runtime can be trained by running the container image built in Step I. Follow the [training steps](app/README.md)

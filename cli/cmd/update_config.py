@@ -64,9 +64,19 @@ def _update_config(config, cookies, sys_uuid):
         ssh_client = common.ssh_to_partition(config)
 
         with SCPClient(ssh_client.get_transport()) as scp:
-            scp.put(f'{common.cloud_init_update_config_dir}/pim_config.json', '/etc/pim/pim_config.json')
-        logger.info("Successfully updated the config of the partition.")
+            scp.put(f'{common.cloud_init_update_config_dir}/pim_config.json', '/tmp')
+        
+        move_cmd = "sudo mv /tmp/pim_config.json /etc/pim/"
+        stdin, stdout, stderr = ssh_client.exec_command(move_cmd)
+        exit_status = stdout.channel.recv_exit_status()
+        if exit_status == 0:
+            logger.info("Successfully updated the config of the partition.")
+        else:
+            errorMsg = stderr.read().decode('utf-8')
+            logger.error(f"failed to update config of the partition. error: {errorMsg}")
+            raise Exception(errorMsg)
 
+        
         # Restart base_config.service
         restart_command = "sudo systemctl restart base_config.service"
         stdin, stdout, stderr = ssh_client.exec_command(restart_command)

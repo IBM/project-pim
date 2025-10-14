@@ -2,6 +2,7 @@
 Description=Run simple entity extraction app
 Requires=vllm.service
 After=vllm.service
+PartOf=base_config.service
 
 [Service]
 Restart=on-failure

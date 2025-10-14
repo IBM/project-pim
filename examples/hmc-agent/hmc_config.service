@@ -2,6 +2,7 @@
 Description=Mount and setup HMC Agent config
 Requires=base_config.service
 After=base_config.service
+PartOf=base_config.service
 
 [Service]
 Type=oneshot

@@ -2,6 +2,7 @@
 Description=Run simple HMC AI agent application and MCP server
 Requires=hmc_config.service
 After=hmc_config.service
+PartOf=base_config.service
 
 [Service]
 Restart=on-failure

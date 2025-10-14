@@ -2,6 +2,7 @@
 Description=Run fraud analytics app
 Requires=fraud_analytics_config.service
 After=fraud_analytics_config.service
+PartOf=base_config.service
 
 [Service]
 Restart=on-failure

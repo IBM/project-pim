@@ -1,8 +1,7 @@
 [Unit]
 Description=Run email named entity recognition app
-Requires=vllm.service
-After=vllm.service
-PartOf=base_config.service
+Requires=email-ner-config.service
+After=email-ner-config.service
 
 [Service]
 Restart=on-failure

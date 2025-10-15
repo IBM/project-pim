@@ -2,7 +2,6 @@
 Description=Run vLLM OpenAI API server
 Requires=llm_config.service
 After=llm_config.service
-PartOf=base_config.service
 
 [Service]
 Restart=on-failure

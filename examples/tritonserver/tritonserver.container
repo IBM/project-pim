@@ -1,0 +1,22 @@
+[Unit]
+Description=Run tritonserver with ONNX runtime to serve deep learning/machine learning models
+Requires=tritonserver_config.service
+After=tritonserver_config.service
+
+[Service]
+Restart=on-failure
+RestartSec=60
+EnvironmentFile=/etc/pim/env.conf
+
+[Container]
+Image=quay.io/powercloud/tritonserver:latest
+ContainerName=tritonserver
+EnvironmentFile=/etc/pim/tritonserver.conf
+Network=host
+PublishPort=8000-8002:8000-8002
+Volume=/var/models/model_repository:/models:Z
+Exec=/bin/sh -c 'tritonserver --model-repository=/models --'
+SecurityLabelType=unconfined_t
+
+[Install]
+WantedBy=multi-user.target default.target

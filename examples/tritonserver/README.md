@@ -8,12 +8,13 @@ Triton inference server is built on top of base image [here](../../base-image/)
 Follow the steps provided [here](../../base-image/README.md) to build the base image.
 
 **Step 2: Build triton server PIM image**
+- Bootc PIM based triton server image brings up the AI partition that can serve trained machine learning models for the AI applications.
 Ensure to replace the `FROM` image in [Containerfile](Containerfile) with the base image you have built before building this image.
 
 ```shell
-podman build -t <your_registry>/pim-triton-server
+podman build -t <your_registry>/pim:triton-server
 
-podman push <your_registry>/pim-triton-server
+podman push <your_registry>/pim:triton-server
 ```
 
 ## Steps to setup e2e inference flow
@@ -44,8 +45,8 @@ systemctl enable httpd
 systemctl start httpd
 # Copy AI app specific artifacts like model file and model config file
 mkdir -p /var/www/html/fraud_detection/
-cp <current_dir>/model_repository/fraud/config.pbtxt /var/www/html/fraud_detection/
-cp <current_dir>/model_repository/fraud/1/model.onnx /var/www/html/fraud_detection/
+cp <current_dir>/model_repository/fraud_detection/config.pbtxt /var/www/html/fraud_detection/
+cp <current_dir>/model_repository/fraud_detection/1/model.onnx /var/www/html/fraud_detection/
 ```
 
 ### Step 3: Setting up PIM partition

@@ -2,7 +2,6 @@
 Description=Mount and setup LLM config
 Requires=base_config.service network-online.target cloud-config.target
 After=base_config.service network-online.target cloud-config.target
-PartOf=base_config.service
 
 [Service]
 Type=oneshot

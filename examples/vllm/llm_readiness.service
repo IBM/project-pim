@@ -1,0 +1,15 @@
+[Unit]
+Description=Check readiness of the vLLM server
+Requires=vllm.service
+After=vllm.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/bin/llm_readiness.sh
+RemainAfterExit=yes
+TimeoutSec=0 
+
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target default.target

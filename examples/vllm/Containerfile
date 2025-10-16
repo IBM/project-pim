@@ -1,6 +1,7 @@
 FROM quay.io/<account id>/pim:base
 
 COPY vllm/llm_config.sh /usr/bin/
+COPY vllm/llm_readiness.sh /usr/bin/
 COPY utility/download_model.py /usr/bin/
 COPY vllm/llm_config.service /etc/systemd/system
 RUN systemctl unmask llm_config.service

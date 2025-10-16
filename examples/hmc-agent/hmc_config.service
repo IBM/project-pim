@@ -1,7 +1,7 @@
 [Unit]
 Description=Mount and setup HMC Agent config
-Requires=vllm.service
-After=vllm.service
+Requires=vllm_readiness.service
+After=vllm_readiness.service
 
 [Service]
 Type=oneshot

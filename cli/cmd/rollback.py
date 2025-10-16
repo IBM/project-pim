@@ -57,5 +57,4 @@ def _rollback(config):
             return False
         return True
     except Exception as e:
-        logger.error(f"failed to rollback PIM partition, error: {e}")
         raise Exception(f"failed to rollback PIM partition, error: {e}")

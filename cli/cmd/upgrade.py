@@ -80,7 +80,6 @@ def _upgrade(config):
         logger.info("Monitoring boot process, this will take a while")
         monitor_util.monitor_pim(config)
     except Exception as e:
-        logger.error(f"failed to upgrade PIM partition, error: {e}")
         raise Exception(f"failed to upgrade PIM partition, error: {e}")
 
     return upgraded

@@ -36,16 +36,12 @@ def monitor_pim_boot(config):
                         return
                 if "base_config.service: Failed with result 'exit-code'" in out:
                     ssh_client.close()
-                    logger.error(f"failed to start AI application. error: {out}")
                     raise Exception(f"failed to start AI application. error: {out}")
         else:
             ssh_client.close()
-            logger.error(
-                "failed to find '/etc/systemd/system/base_config.service', please check console for more possible errors")
             raise Exception(
                 "failed to  find '/etc/systemd/system/base_config.service', please check console for more possible errors")
     except Exception as e:
-        logger.error(f"failed to monitor PIM boot, error: {e}")
         raise Exception(f"failed to monitor PIM boot, error: {e}")
 
 
@@ -73,8 +69,6 @@ def monitor_pim(config):
         else:
             logger.info(f"AI application is up and running, Response: {msg}")
             return
-    logger.error(
-        f"failed to bring up AI application from PIM image, error: {msg}")
     raise AIAppError(
         f"failed to bring up AI application from PIM image, error: {msg}")
 
@@ -106,17 +100,15 @@ def monitor_bootstrap_boot(config):
                         break
                     else:
                         logger.error(
-                            "Failed to detect bootc based PIM AI image install completion signature. Please check console logs for more information\n")
+                            "failed to detect bootc based PIM AI image install completion signature. Please check console logs for more information\n")
                 if "getcontainer.service: Failed with result 'exit-code'" in out:
                     ssh_client.close()
-                    logger.error(f"failed to detect bootc based PIM AI image install completion signature. error: {out}")
                     raise Exception(f"failed to detect bootc based PIM AI image install completion signature. error: {out}")
         else:
             logger.debug(
                 "Could not find 'getcontainer.service', will look for 'base_config.service' in PIM boot since it could be a re-run and bootstrap might have already finished")
             ssh_client.close()
     except Exception as e:
-        logger.error(f"failed to monitor bootstrap boot, error: {e}")
         raise Exception(f"failed to monitor bootstrap boot, error: {e}")
 
     return

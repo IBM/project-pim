@@ -14,42 +14,46 @@ from cli.vios.vios_exception import VIOSError
 logger = common.get_logger("vios")
 
 def get_vios_details(config, cookies, system_uuid, vios_uuid):
-    uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/VirtualIOServer/{vios_uuid}"
-    url = "https://" + util.get_host_address(config) + uri
-    headers = {"x-api-key": util.get_session_key(
-        config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=VirtualIOServer"}
-    response = requests.get(url, headers=headers,
-                            cookies=cookies, verify=False)
-    if response.status_code != 200:
-        logger.error(f"failed to get VIOS details for '{vios_uuid}', error")
-        raise VIOSError(f"failed to get VIOS details for '{vios_uuid}', error")
+    try:
+        uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/VirtualIOServer/{vios_uuid}"
+        url = "https://" + util.get_host_address(config) + uri
+        headers = {"x-api-key": util.get_session_key(
+            config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=VirtualIOServer"}
+        response = requests.get(url, headers=headers,
+                                cookies=cookies, verify=False)
+        response.raise_for_status()
 
-    soup = BeautifulSoup(response.text, 'xml')
-    vios = str(soup.find("VirtualIOServer"))
+        soup = BeautifulSoup(response.text, 'xml')
+        vios = str(soup.find("VirtualIOServer"))
+    except requests.exceptions.RequestException as e:
+        raise VIOSError(f"failed to get VIOS details for '{vios_uuid}' while making http request, error: {e}, response: {e.response.text}")
+    except Exception as e:
+        raise VIOSError(f"failed to get VIOS details for '{vios_uuid}', error: {e}")
     return vios
 
 
 def get_vios_uuid_list(config, cookies, system_uuid):
-    uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/VirtualIOServer/quick/All"
-    url = "https://" + util.get_host_address(config) + uri
-    headers = {"x-api-key": util.get_session_key(
-        config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=VirtualIOServer"}
-    response = requests.get(url, headers=headers,
-                            cookies=cookies, verify=False)
-    if response.status_code != 200:
-        logger.error(f"failed to get VIOS list, error: {response.text}")
-        raise VIOSError(f"failed to get VIOS list, error: {response.text}")
+    try:
+        uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/VirtualIOServer/quick/All"
+        url = "https://" + util.get_host_address(config) + uri
+        headers = {"x-api-key": util.get_session_key(
+            config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=VirtualIOServer"}
+        response = requests.get(url, headers=headers,
+                                cookies=cookies, verify=False)
+        response.raise_for_status()
 
-    uuids = []
-    sys_name = util.get_system_name(config)
-    for vios in response.json():
-        if vios["SystemName"] == sys_name:
-            uuids.append(vios["UUID"])
+        uuids = []
+        sys_name = util.get_system_name(config)
+        for vios in response.json():
+            if vios["SystemName"] == sys_name:
+                uuids.append(vios["UUID"])
 
-    if len(uuids) == 0:
-        logger.error(f"no VIOS available for '{sys_name}'")
-        raise VIOSError(f"no VIOS available for '{sys_name}'")
-
+        if len(uuids) == 0:
+            raise VIOSError(f"no VIOS available for '{sys_name}'")
+    except requests.exceptions.RequestException as e:
+        raise VIOSError(f"failed to get VIOS list while making http request, error: {e}, response: {e.response.text}")
+    except Exception as e:
+        raise VIOSError(f"failed to get VIOS list, error: {e}")
     return uuids
 
 
@@ -128,20 +132,23 @@ def get_vios_with_physical_storage(config, active_vios_servers):
 
 
 def get_volume_group(config, cookies, vios_uuid, vg_name):
-    uri = f"/rest/api/uom/VirtualIOServer/{vios_uuid}/VolumeGroup"
-    url = "https://" + util.get_host_address(config) + uri
-    headers = {"x-api-key": util.get_session_key(
-        config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
-    response = requests.get(url, headers=headers,
-                            cookies=cookies, verify=False)
-    if response.status_code != 200:
-        logger.error(f"failed to get volume group, error: {response.text}")
-        raise Exception(f"failed to get volume group, error: {response.text}")
+    try:    
+        uri = f"/rest/api/uom/VirtualIOServer/{vios_uuid}/VolumeGroup"
+        url = "https://" + util.get_host_address(config) + uri
+        headers = {"x-api-key": util.get_session_key(
+            config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
+        response = requests.get(url, headers=headers,
+                                cookies=cookies, verify=False)
+        response.raise_for_status()
 
-    soup = BeautifulSoup(response.text, 'xml')
-    group = soup.find("GroupName", string=vg_name)
-    vol_group = group.parent
-    vg_id = vol_group.find("AtomID").text
+        soup = BeautifulSoup(response.text, 'xml')
+        group = soup.find("GroupName", string=vg_name)
+        vol_group = group.parent
+        vg_id = vol_group.find("AtomID").text
+    except requests.exceptions.RequestException as e:
+        raise VIOSError(f"failed to get volume group while making http request, error: {e}, response: {e.response.text}")
+    except Exception as e:
+        raise VIOSError(f"failed to get volume group, error: {e}")
     return vg_id
 
 def cleanup_logical_volume(config, cookies, vios, vios_uuid, sys_uuid, partition_uuid):
@@ -212,6 +219,8 @@ def cleanup_vios(config, cookies, sys_uuid, partition_uuid, vios_uuid_list):
                     _ = cleanup_storage(config, cookies, vios, vios_uuid, sys_uuid, partition_uuid)
     except Exception as e:
         logger.error(f"failed to clean up VIOS, error: {e}")
+        return False
+    return True
 
 
 def find_vios_with_vopt_mounted(config, cookies, sys_uuid, partition_uuid, vios_uuid_list, vopt_name):

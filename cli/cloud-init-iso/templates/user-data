@@ -1,0 +1,29 @@
+#cloud-config
+users:
+  - name: {{ config["ssh"]["user-name"] }}
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    lock_passwd: true
+    groups: sudo
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - {{ config["ssh"]["pub-key"] }}
+
+write_files:
+  - path: /etc/pim/pim_config.json
+    content: |
+      {{ config["ai"]["config-json"] }}
+    owner: root:root
+    permissions: '0644'
+    append: false
+  - path: /etc/pim/auth.json
+    content: |
+      {{ config["ai"]["auth-json"] }}
+    owner: root:root
+    permissions: '0644'
+    append: false
+  - path: /etc/pim/env.conf
+    content: |
+      REGISTRY_AUTH_FILE=/etc/pim/auth.json
+    owner: root:root
+    permissions: '0644'
+    append: false

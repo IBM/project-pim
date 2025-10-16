@@ -19,3 +19,4 @@ six==1.17.0
 soupsieve==2.7
 typing-extensions==4.14.0
 urllib3==2.5.0
+scp==0.15.0

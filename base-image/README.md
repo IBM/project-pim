@@ -15,7 +15,7 @@ There are three distros of bootc image available to use. Fedora, CentOS and RHEL
 
     **Note:**
     - You need Red Hat account to get the credentials to pull the image. 
-    - Need to build the image on RHEL machine where subsciption activated.
+    - Need to build the image on RHEL machine where subscription activated.
 
 
 

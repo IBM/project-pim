@@ -8,7 +8,7 @@ All the custom examples contains following files
 **Containerfile**
 
 ```Dockerfile
-FROM quay.io/<account id>/pim:base
+FROM quay.io/powercloud/pim:base
 ```
 Base Image built from [here](../base-image/)
 ```Dockerfile

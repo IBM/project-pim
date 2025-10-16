@@ -6,7 +6,9 @@ PIM deployer deploys custom-built PIM bootable container image composed of AI wo
 
 ### Prerequisites
 - P10 or higher power system host managed by HMC with VIOS to create a partition and provision the AI stack
-- VIOS with an available disk size of at least 120GB (if physical disk is chosen to attach to LPAR) and media repository size of at least 2GB to host the bootstrap iso and cloud-init iso
+- Follow this [support version](../README.md#supported-versions) matrix to make sure components are meeting minimum version requirement.
+- VIOS with media repository size of at least 2GB to host the bootstrap iso and cloud-init iso
+- VIOS with an available disk size of at least 120GB (if physical disk is chosen to attach to LPAR) 
   or
 - An existing partition with an external storage managed by a SAN attached
 
@@ -46,7 +48,7 @@ python3 cli/pim.py launch
 ```
 
 #### Upgrade
-- This action upgrades the PIM AI workload image to the latest version available in the repository. If no latest image is available, it ignores the upgrade.
+- This action upgrades the PIM Bootc image to the latest version available in the repository. If no latest image is available, it ignores the upgrade.
 The user needs to note that image credentials should be updated in config.ini if the credentials used since the launch of the partition have expired.
 
 ```shell
@@ -55,7 +57,7 @@ python3 cli/pim.py upgrade
 ```
 
 #### Rollback
-- This action rolls back the current PIM AI workload image to the previous version of the image. 
+- This action rolls back the current PIM Bootc image to the previous version of the image. 
 
 ```shell
 export PYTHONPATH=.

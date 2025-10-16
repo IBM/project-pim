@@ -1,4 +1,4 @@
-FROM quay.io/<account id>/pim:vllm
+FROM quay.io/powercloud/pim:vllm
 
 COPY email-ner-config.sh /usr/bin
 COPY email-ner-config.service /etc/systemd/system

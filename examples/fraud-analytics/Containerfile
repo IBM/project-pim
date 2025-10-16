@@ -1,4 +1,4 @@
-FROM quay.io/<account id>/pim:base
+FROM quay.io/powercloud/pim:base
 
 COPY fraud_analytics_config.sh /usr/bin/
 COPY fraud_analytics_config.service /etc/systemd/system
@@ -6,5 +6,3 @@ RUN systemctl unmask fraud_analytics_config.service
 RUN systemctl enable fraud_analytics_config.service
 
 COPY fraud-analytics.container /usr/share/containers/systemd
-
-

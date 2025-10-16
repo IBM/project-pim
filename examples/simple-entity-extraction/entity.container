@@ -9,7 +9,7 @@ RestartSec=60
 EnvironmentFile=/etc/pim/env.conf
 
 [Container]
-Image=quay.io/<account id>/pim:entity-extraction
+Image=<your registry>/pim:entity-extraction
 Network=host
 SecurityLabelType=unconfined_t
 AutoUpdate=registry

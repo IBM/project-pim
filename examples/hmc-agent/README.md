@@ -1,9 +1,9 @@
 # AI agent to manage Power Infra using MCP Server built for HMC
 
 This is a reference application built for PIM stack using MCP server leveraging HMC APIs.
-this wraps HMC server and agent on top of [vLLM server](../../examples/vllm/README.md) built.
+this wraps HMC server and agent on top of [vLLM server](../../examples/vllm) built.
 
-It bootstraps HMC server and HMC agent components. Steps to build and containerize are [here](app/README.md)
+It bootstraps HMC server and HMC agent components. Steps to build and containerize are [here](app)
 
 ## Configuration
 
@@ -12,7 +12,7 @@ Since vLLM AI image can be used as a base for many LLM inferencing applications 
 This can be fed into the application via `config-json` explained [here](../../docs/configuration-guide.md#ai)
 
 #### llmImage
-vLLM container image built using app section [here](../vllm/app/README.md)
+vLLM container image built using app section [here](../vllm/app)
 #### llmArgs
 Args you can pass it to your vLLM inference engine like model name, maximum model length etc. model name passed as part of llmArgs will be used by HMC agent.  
 **Make sure to pass tooling related configuration as part of llmArgs as captured in the sample config**
@@ -34,7 +34,7 @@ config-json = """
 ```
 
 ## Steps to build PIM HMC agent image
-Pre-requisite: Since PIM HMC agent image bootstraps HMC server and HMC agent, build the respective container images and push them to container registry by following steps [here](./app/README.md)
+Pre-requisite: Since PIM HMC agent image bootstraps HMC server and HMC agent, build the respective container images and push them to container registry by following steps [here](./app)
 
 - Enter into hmc-agent example application directory containing [Containerfile](./Containerfile)
 - Build the PIM HMC agent container image using podman

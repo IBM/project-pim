@@ -116,7 +116,6 @@ def get_lpar_profile_id(config, cookies, partition_uuid):
     headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=LogicalPartitionProfile"}
     response = requests.get(url, headers=headers, cookies=cookies, verify=False)
     if response.status_code != 200:
-        logger.error(f"failed to get LPAR profile ID, error: {response.text}")
         raise PartitionError(f"failed to get LPAR profile ID, error: {response.text}")
     soup = BeautifulSoup(response.text, 'xml')
     entry_node = soup.find('entry')
@@ -129,7 +128,6 @@ def poll_job_status(config, cookies, job_id):
     headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.web+xml; type=JobRequest"}
     response = requests.get(url, headers=headers, cookies=cookies, verify=False)
     if response.status_code != 200:
-        logger.error(f"failed to get job completion, error: {response.text}")
         raise PartitionError(f"failed to get job completion, error: {response.text}")
     soup = BeautifulSoup(response.text, 'xml')
     status = soup.find("Status").text
@@ -172,12 +170,10 @@ def activate_partition(config, cookies, partition_uuid):
     headers = {"x-api-key": util.get_session_key(config), "Content-Type": CONTENT_TYPE}
     response = requests.put(url, headers=headers, cookies=cookies, data=payload, verify=False)
     if response.status_code != 200:
-        logger.error(f"failed to activate partition, error: {response.text}")
         raise PartitionError(f"failed to activate partition, error: {response.text}")
     # check job status for COMPLETED_OK
     status = check_job_status(config, cookies, response.text)
     if not status:
-        logger.error(f"failed to activate partition, activate job returned false")
         raise PartitionError(f"failed to activate partition, activate job returned false")
     logger.debug("Partition activated successfully.")
     return
@@ -188,20 +184,18 @@ def check_lpar_status(config, cookies, partition_uuid):
     headers = {"x-api-key": util.get_session_key(config)}
     response = requests.get(url, headers=headers, cookies=cookies, verify=False)
     if response.status_code != 200:
-        logger.error(f"failed to get LPAR details for '{partition_uuid}', error: {response.text}")
-        raise PartitionError(f'Failed to get LPAR details for {partition_uuid}')
+        raise PartitionError(f'failed to get LPAR details for {partition_uuid}, error: {response.text}')
     soup = BeautifulSoup(response.text, 'xml')
     state = soup.find("PartitionState")
     if state == None:
-        logger.error(f"partition state of LPAR '{partition_uuid}' found to be None")
-        raise PartitionError(f'Failed to get LPAR status for {partition_uuid}')
+        raise PartitionError(f"partition state of LPAR '{partition_uuid}' found to be None")
     return state.text
 
 def shutdown_partition(config, cookies, partition_uuid):
     lpar_state = check_lpar_status(config, cookies, partition_uuid)
     if lpar_state == "not activated":
         logger.debug("Partition already in 'not activated' state, skipping shutdown")
-        return
+        return True
 
     uri = f"/rest/api/uom/LogicalPartition/{partition_uuid}/do/PowerOff"
     url =  "https://" + util.get_host_address(config) + uri
@@ -210,10 +204,10 @@ def shutdown_partition(config, cookies, partition_uuid):
     response = requests.put(url, headers=headers, cookies=cookies, data=payload, verify=False)
     if response.status_code != 200:
         logger.error(f"failed to shutdown partition, error: {response.text}")
-        return
+        return False
     # check job status for COMPLETED_OK
     status = check_job_status(config, cookies, response.text)
     if not status:
         logger.error(f"failed to shutdown partition, shutdown job returned false")
-        return
-    return
+        return False
+    return True

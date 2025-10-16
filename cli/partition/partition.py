@@ -84,10 +84,8 @@ def get_lpar_update_payload(config, curr_lpar_payload):
         max_memory = lpar_mem_config.find("MaximumMemory")
         desired_memory = lpar_mem_config.find("DesiredMemory")
         if min_memory is None or max_memory is None or desired_memory is None:
-            logger.error(
-                "XML parsing error: Unable to find memory configs from partition payload")
-            raise Exception(
-                "XML parsing error: Unable to find memory configs from partition payload")
+            raise PartitionError(
+                "xml parsing error: unable to find memory configs from partition payload")
         min_memory.string.replace_with(
             str(convert_gb_to_mb(util.get_min_memory(config))))
         max_memory.string.replace_with(
@@ -98,36 +96,27 @@ def get_lpar_update_payload(config, curr_lpar_payload):
         lpar_cpu_config = curr_lpar.find("PartitionProcessorConfiguration")
         partition_name = curr_lpar.find("PartitionName")
         if util.has_dedicated_proc(config) == "true":
-            logger.debug("update-compute: dedicated proc mode")
             desired_proc = lpar_cpu_config.find("DesiredProcessors")
             min_proc = lpar_cpu_config.find("MinimumProcessors")
             max_proc = lpar_cpu_config.find("MaximumProcessors")
             if desired_proc is None or min_proc is None or max_proc is None:
-                logger.error(
-                    "XML parsing error: Unable to find processor configs from partition payload")
-                raise Exception(
-                    "XML parsing error: Unable to find processor configs from partition payload")
+                raise PartitionError(
+                    "xml parsing error: unable to find processor configs from partition payload")
             desired_proc.string.replace_with(util.get_desired_proc(config))
             min_proc.string.replace_with(util.get_min_proc(config))
             max_proc.string.replace_with(util.get_max_proc(config))
         else:
             # Switch from dedicated to shared processor config
-            logger.debug("update-compute: shared proc mode")
             if lpar_cpu_config is None:
-                logger.error(
-                    "XML parsing error: Unable to find processor configs from partition payload")
-                raise Exception(
-                    "XML parsing error: Unable to find processor configs from partition payload")
+                raise PartitionError(
+                    "xml parsing error: unable to find processor configs from partition payload")
             lpar_cpu_config.decompose()
-            logger.debug("get new shared processor config")
             new_proc_config = BeautifulSoup(
                 get_processor_config(config), 'xml')
             partition_name.insert_after(new_proc_config)
         lpar_payload = curr_lpar
     except Exception as e:
-        logger.error(
-            "Exception while getting partition cpu or memory configurations")
-        raise e
+        raise PartitionError(f"failed to get partition's compute(cpu & memory) configurations, error: {e}")
     return lpar_payload
 
 
@@ -142,7 +131,6 @@ def get_all_partitions(config, cookies, system_uuid):
     response = requests.get(url, headers=headers,
                             cookies=cookies, verify=False)
     if response.status_code != 200:
-        logger.error(f"failed to get partition list, error: {response.text}")
         raise PartitionError(
             f"failed to get partition list, error: {response.text}")
     return response.json()
@@ -186,7 +174,6 @@ def create_partition(config, cookies, system_uuid):
     response = requests.put(url, headers=headers,
                             data=payload, cookies=cookies, verify=False)
     if response.status_code != 200:
-        logger.error(f"failed to create partition, error: {response.text}")
         raise PartitionError(
             f"failed to create partition, error: {response.text}")
 
@@ -203,9 +190,7 @@ def get_partition_details(config, cookies, system_uuid, partition_uuid):
     response = requests.get(url, headers=headers,
                             cookies=cookies, verify=False)
     if response.status_code != 200:
-        logger.error(
-            f"failed to get partition details, error: {response.text}")
-        raise PartitionError(
+       raise PartitionError(
             f"failed to get partition details, error: {response.text}")
     soup = BeautifulSoup(response.text, 'xml')
     lpar = str(soup.find('LogicalPartition'))
@@ -219,8 +204,6 @@ def edit_lpar_compute(config, cookies, system_uuid, partition_uuid):
         updated_lpar_payload = get_lpar_update_payload(
             config, partition_payload)
         if updated_lpar_payload is None:
-            logger.error(
-                f"failed to get updated lpar compute payload, error: {response.text}")
             raise PartitionError(
                 f"failed to get updated lpar compute payload, error: {response.text}")
 
@@ -233,8 +216,6 @@ def edit_lpar_compute(config, cookies, system_uuid, partition_uuid):
         response = requests.post(url, headers=headers, cookies=cookies, data=str(
             updated_lpar_payload), verify=False)
         if response.status_code != 200:
-            logger.error(
-                f"failed to edit lpar compute, error: {response.text}")
             raise PartitionError(
                 f"failed to edit lpar compute, error: {response.text}")
     except Exception as e:
@@ -256,8 +237,6 @@ def set_partition_boot_string(config, cookies, system_uuid, partition_uuid, part
     response = requests.post(url, headers=headers,
                              cookies=cookies, data=str(payload), verify=False)
     if response.status_code != 200:
-        logger.error(
-            f"failed to update boot order for the partition: '{partition_uuid}', error: {response.text}")
         raise PartitionError(
             f"failed to update boot order for the partition: '{partition_uuid}', error: {response.text}")
     logger.debug(
@@ -273,6 +252,6 @@ def remove_partition(config, cookies, partition_uuid):
     response = requests.delete(
         url, headers=headers, cookies=cookies, verify=False)
     if response.status_code != 204:
-        logger.error(f"failed to delete partition, error: {response.text}")
+        logger.error(f"failed to delete partition, error: '{response.text}'")
         return
     logger.debug("Partition deleted successfully")

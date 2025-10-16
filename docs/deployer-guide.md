@@ -18,7 +18,7 @@ On IBMi run
 source <(curl -sL https://raw.githubusercontent.com/IBM/project-pim/main/install_ibmi.sh)
 ```
 
-On Linux run
+On Linux(RHEL/Fedora/CentOS) run
 ```shell
 source <(curl -sL https://raw.githubusercontent.com/IBM/project-pim/main/install_linux.sh)
 ```

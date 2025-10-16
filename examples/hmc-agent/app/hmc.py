@@ -105,7 +105,7 @@ def get_logical_partitions(system_name):
         if system["SystemName"] == system_name:
             system_uuid = system["UUID"]
     if system_uuid == "":
-        return f"failed to find system with name '{system_name}'"
+        return f"no system available with name '{system_name}'"
     
     uri = f"/rest/api/uom/LogicalPartition/quick/All"
     url = f"https://{os.getenv("HMC_IP")}/{uri}"

@@ -33,7 +33,6 @@ def get_network_uuid(config, cookies, system_uuid):
     headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml, type=VirtualNetwork"}
     response = requests.get(url, headers=headers, cookies=cookies, verify=False)
     if response.status_code != 200:
-        logger.error(f"failed to list VLAN, error: {response.text}")
         raise NetworkError(f"failed to list VLAN, error: {response.text}")
     uuid = ""
     network_name = util.get_vnetwork_name(config)
@@ -43,8 +42,7 @@ def get_network_uuid(config, cookies, system_uuid):
             break
 
     if "" == uuid:
-        logger.error(f"failed to find virtual network with name '{network_name}'")
-        raise NetworkError(f"failed to find virtual network with name '{network_name}'")
+        raise NetworkError(f"no virtual network available with name '{network_name}'")
     else:
         logger.debug(f"Network UUID for the virtual network {network_name}: {uuid}")
     return uuid
@@ -56,7 +54,6 @@ def get_vlan_details(config, cookies, system_uuid):
     headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml, type=VirtualNetwork"}
     response = requests.get(url, headers=headers, cookies=cookies, verify=False)
     if response.status_code != 200:
-        logger.error(f"failed to get VLAN details, error: {response.text}")
         raise NetworkError(f"failed to get VLAN details, error: {response.text}")
     
     soup = BeautifulSoup(response.text, 'xml')
@@ -81,11 +78,11 @@ def check_network_adapter(config, cookies, partition_uuid, vlan_id, vswitch_id):
                 logger.debug(f"Found network with VLAN '{vlan_id}' and Switch '{vswitch_id}' attached to lpar.")
                 slot_num = soup.find("VirtualSlotNumber").text
                 return True, slot_num
-        else:
-            raise NetworkError(f"failed to check if virtual network is attached to the partition, error: {response.text}")
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise NetworkError(f"failed to check if virtual network is attached to the partition while making http request, error: {e}, response: {e.response.text}")
     except Exception as e:
-        logger.error(f"failed to check if virtual network is attached to the partition, error: {e}")
-        raise e
+        raise NetworkError(f"failed to check if virtual network is attached to the partition, error: {e}")
     return False, slot_num
 
 def attach_network(config, cookies, system_uuid, partition_uuid):
@@ -105,10 +102,10 @@ def attach_network(config, cookies, system_uuid, partition_uuid):
         url =  "https://" +  util.get_host_address(config) + uri
         headers = {"x-api-key": util.get_session_key(config), "Content-Type": CONTENT_TYPE}
         response = requests.put(url, headers=headers, cookies=cookies, data=payload, verify=False)
-        if response.status_code != 200:
-            logger.error(f"failed to attach virtual network to the partition, error: {response.text}")
-            raise NetworkError(f"failed to attach virtual network to the partition, error: {response.text}")
+        response.raise_for_status()
         logger.debug(f"Network '{util.get_vnetwork_name(config)}' attached to lpar")
+    except requests.exceptions.RequestException as e:
+        raise NetworkError(f"failed to attach virtual network to the partition while making http request, error: {e}, response: {e.response.text}")
     except Exception as e:
-        raise e
+        raise NetworkError(f"failed to attach virtual network to the partition, error: {e}")
     return DEFAULT_NW_SLOT

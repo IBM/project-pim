@@ -51,15 +51,13 @@ def _launch(config, cookies, sys_uuid, vios_uuids):
         active_vios_servers = vios_operation.get_active_vios(
             config, cookies, sys_uuid, vios_uuids)
         if len(active_vios_servers) == 0:
-            logger.error("failed to find active VIOS server")
-            raise VIOSError("failed to find active VIOS server")
+            raise VIOSError(f"no active VIOS server attached to the system '{util.get_host_address(config)}'")
         logger.debug(
             f"List of active VIOS '{list(active_vios_servers.keys())}'")
 
         vios_media_uuid_list = vios_operation.get_vios_with_mediarepo_tag(active_vios_servers)
         if len(vios_media_uuid_list) == 0:
-            logger.error("failed to find VIOS server for the partition")
-            raise StorageError("failed to find VIOS server for the partition")
+            raise StorageError(f"no VIOS server attached with media repository on the system '{util.get_host_address(config)}'")
 
         logger.info("Setting up partition")
         exists, created_by_pim, partition_uuid = partition.check_partition_exists(config, cookies, sys_uuid)
@@ -186,10 +184,7 @@ def setup_storage(config, cookies, active_vios, sys_uuid, lpar_id):
             vios_storage_list = vios_operation.get_vios_with_physical_storage(
                 config, active_vios)
             if len(vios_storage_list) == 0:
-                logger.error(
-                    "failed to find physical volume for the partition")
-                raise StorageError(
-                    "failed to find physical volume for the partition")
+                raise StorageError(f"no VIOS server attached with available physical disk on the system '{util.get_host_address(config)}' to attach to the PIM partition")
             storage.attach_physical_storage(
                 config, cookies, sys_uuid, lpar_id, vios_storage_list)
     except (StorageError, VIOSError, Exception) as e:
@@ -200,8 +195,7 @@ def handle_virtual_disk(config, cookies, active_vios, sys_uuid, lpar_id):
         vios_storage_list = vios_operation.get_vios_with_physical_storage(
             config, active_vios)
         if len(vios_storage_list) == 0:
-            logger.error("failed to find physical volume for the partition")
-            raise StorageError("failed to find physical volume for the partition")
+            raise StorageError(f"no VIOS server attached with available physical disk on the system '{util.get_host_address(config)}' to attach to the PIM partition")
         vios_storage_uuid = vios_storage_list[0][0]
         updated_vios_payload = vios_operation.get_vios_details(config, cookies, sys_uuid, vios_storage_uuid)
 

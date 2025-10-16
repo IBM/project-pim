@@ -62,9 +62,7 @@ def check_if_storage_attached(vios, partition_uuid):
                         phys_disk = physical_volume.find("VolumeName").text
                         break
     except Exception as e:
-        logger.error(
-            "failed to check if storage SCSI mapping is present in VIOS")
-        raise e
+        raise StorageError(f"failed to check if storage SCSI mapping is present in VIOS, error: {e}")
     return found, phys_disk
 
 def check_if_vfc_disk_attached(vios, partition_uuid):
@@ -86,8 +84,7 @@ def check_if_vfc_disk_attached(vios, partition_uuid):
                     portname = port.find("PortName").text
                     break
     except Exception as e:
-        logger.error("failed to check if storage SCSI mapping is present in VIOS")
-        raise e
+        raise StorageError(f"failed to check if storage SCSI mapping is present in VIOS, error: {e}")
     return found, portname
 
 def attach_storage(vios_payload, config, cookies, partition_uuid, system_uuid, vios_uuid, physical_vol_name):
@@ -102,8 +99,6 @@ def attach_storage(vios_payload, config, cookies, partition_uuid, system_uuid, v
                              cookies=cookies, data=payload, verify=False)
 
     if response.status_code != 200:
-        logger.error(
-            f"failed to attach physical disk to the partition, error: {response.text}")
         raise StorageError(
             f"failed to attach physical disk to the partition, error: {response.text}")
     return
@@ -127,11 +122,9 @@ def attach_physical_storage(config, cookies, sys_uuid, partition_uuid, vios_stor
                 f"Attached '{physical_volume_name}' physical volume to the partition from VIOS '{vios_storage_uuid}'")
             break
         except (vios_operation.VIOSError, StorageError, Exception) as e:
-            logger.error(
-                f"failed to attach '{physical_volume_name}' physical storage in VIOS '{vios_storage_uuid}'")
             if index == len(vios_storage_list) - 1:
-                raise e
+                raise StorageError(f"failed to attach '{physical_volume_name}' physical storage in VIOS '{vios_storage_uuid}', error: {e}")
             else:
                 logger.debug(
-                    "Attempting to attach physical storage present in next available VIOS")
+                    f"failed to attach '{physical_volume_name}' physical storage in VIOS '{vios_storage_uuid}', attempting to attach physical storage present in next available VIOS")
     return

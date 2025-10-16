@@ -61,10 +61,8 @@ def generate_cloud_init_iso_file(iso_dir, config, config_dir):
 
     try:
         subprocess.run(generate_cmd.split(), check=True, capture_output=True)
-    except subprocess.CalledProcessError as e:
-        logger.error(
-            f"failed to generate cloud-init ISO via mkisofs, error: {e.stderr}")
-        raise
+    except subprocess.CalledProcessError as e:            
+        raise Exception(f"failed to generate cloud-init ISO via mkisofs, error: {e.stderr}\n {e.stdout}")
 
 
 def download_bootstrap_iso(iso_dir, config):
@@ -109,9 +107,10 @@ def download_bootstrap_iso(iso_dir, config):
         logger.debug(
             "Integrity of downloaded bootstrap iso has been successfully verified..")
     except requests.exceptions.RequestException as e:
-        logger.error(
-            f"failed to download '{get_bootstrap_iso(config)}' file, error: {e}")
-        raise
+        raise Exception(f"failed to download '{get_bootstrap_iso(config)}' file while making http request, error: {e}, response: {e.response.text}")
+    except Exception as e:
+        raise Exception(f"failed to download '{get_bootstrap_iso(config)}' file, error: {e}")
+    
     logger.debug("Download completed for bootstrap ISO file")
     return
 
@@ -128,9 +127,9 @@ def download_bootstrap_checksum(checksum_url, checksum_file_path):
             for chunk in response.iter_content(chunk_size=8192):
                 csum_file.write(chunk)
     except requests.exceptions.RequestException as e:
-        logger.error(
-            f"failed to download '{checksum_file_path}' file, error: {e}")
-        raise
+        raise Exception(f"failed to download '{checksum_file_path}' file while making http request, error: {e}, response: {e.response.text}")
+    except Exception as e:
+        raise Exception(f"failed to download '{checksum_file_path}' file, error: {e}")
     return
 
 
@@ -152,13 +151,11 @@ def remove_iso_file(config, cookies, filename, file_uuid):
         response = requests.delete(
             url, headers=headers, cookies=cookies, verify=False)
         if response.status_code != 204:
-            logger.error(
-                f"failed to remove ISO file '{filename}' from VIOS after uploading to media repository, error: {response.text}")
             raise Exception(
                 f"failed to remove ISO file '{filename}' from VIOS after uploading to media repository, error: {response.text}")
     except Exception as e:
         logger.error(
-            f"Failed to remove ISO file '{filename}' from VIOS after uploading to media repository, error {e}")
+            f"failed to remove ISO file '{filename}' from VIOS after uploading to media repository, error {e}")
 
     logger.debug(f"ISO file: '{filename}' removed from VIOS successfully")
     return
@@ -226,14 +223,13 @@ def upload_iso_to_media_repository(config, cookies, iso_dir, iso_file_name, sys_
             logger.debug(f"Uploaded '{iso_file_name}' to vios '{vios_uuid}'")
             return vios_uuid
         except Exception as e:
-            logger.error(f"failed to upload ISO to '{vios_uuid}' VIOS")
             if file_uuid != "":
                 remove_iso_file(config, cookies, iso_file, file_uuid)
             if index == len(vios_uuid_list)-1:
-                raise e
+                raise Exception(f"failed to upload ISO to '{vios_uuid}' VIOS, error: {e}")
             else:
                 logger.debug(
-                    "Upload of ISO file will be attempted on next available VIOS")
+                    "failed to upload ISO to '{vios_uuid}' VIOS, ISO upload will be attempted on next available VIOS")
     return
 
 
@@ -257,17 +253,14 @@ def create_iso_path(config, cookies, vios_uuid, filename, checksum, filesize):
     try:
         response = requests.put(url, headers=headers,
                                 data=payload, cookies=cookies, verify=False)
-        if response.status_code != 200:
-            logger.error(
-                f"failed to create ISO path for file '{filename}', error: {response.text}")
-            raise Exception(
-                f"failed to create ISO path for file '{filename}', error: {response.text}")
+        response.raise_for_status()
         # extract file uuid from response
         soup = BeautifulSoup(response.text, "xml")
         file_uuid = soup.find("FileUUID").text
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"failed to create ISO path for file '{filename}' while making http request, error: {e}, response: {e.response.text}")
     except Exception as e:
-        logger.error(f"failed to create ISO path, error: {e}")
-        raise e
+        raise Exception(f"failed to create ISO path for file '{filename}', error: {e}")
     logger.debug(f"{filename} ISO path created successfully")
 
     return file_uuid
@@ -289,15 +282,11 @@ def uploadfile(config, cookies, filehandle, file_uuid):
     try:
         response = requests.put(url, headers=headers, data=readfile(
             filehandle, chunksize=65536), cookies=cookies, verify=False)
-        if response.status_code != 204:
-            logger.error(
-                f"failed to upload ISO file '{filehandle}' to VIOS media repository, error: {response.text}")
-            raise Exception(
-                f"failed to upload ISO file '{filehandle}' to VIOS media repository, error: {response.text}")
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"failed to upload ISO file '{filehandle}' to VIOS media repository while making http request, error: {e}, response: {e.response.text}")
     except Exception as e:
-        logger.error(
-            f"failed to upload ISO file '{filehandle}' to VIOS media repository, error: {e}")
-        raise e
+        raise Exception(f"failed to upload ISO file '{filehandle}' to VIOS media repository, error: {e}")
     return
 
 
@@ -332,7 +321,6 @@ def get_media_repositories(config, cookies, vios):
         if storage_pool.find("link") is not None:
             vg_url = storage_pool.find("link").attrs['href']
         else:
-            logger.error("failed to get volume group hyperlink from VIOS")
             raise Exception("failed to get volume group hyperlink from VIOS")
 
         # make REST call to volume group URL(vg_url) to get list of media repositories
@@ -341,15 +329,12 @@ def get_media_repositories(config, cookies, vios):
         response = requests.get(vg_url, headers=headers,
                                 cookies=cookies, verify=False)
         if response.status_code != 200:
-            logger.error(
-                f"failed to get media repositories, error: {response.text}")
             raise Exception(
                 f"failed to get media repositories, error: {response.text}")
         soup = BeautifulSoup(response.text, 'xml')
         media_repos = soup.find("MediaRepositories")
         vol_group = soup.find("VolumeGroup")
     except Exception as e:
-        logger.error(f"failed to get media repositories, error: {e}")
-        raise e
+        raise Exception(f"failed to get media repositories, error: {e}")
     logger.debug("Obtained media repositories from VIOS successfully")
     return vg_url, vol_group, media_repos

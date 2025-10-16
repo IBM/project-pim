@@ -49,8 +49,7 @@ def remove_vopt_device(config, cookies, vios, vopt_name):
         vg_url, vol_group, media_repos = iso_util.get_media_repositories(
             config, cookies, vios)
         if media_repos is None:
-            logger.error("failed to get media repositories")
-            raise Exception("failed to get media repositories")
+            raise Exception(f"failed to get media repositories to remove vopt device '{vopt_name}'")
 
         found = False
         # remove vopt_name from media repositoy
@@ -127,8 +126,7 @@ def check_if_scsi_mapping_exist(partition_uuid, vios, media_dev_name):
                     vscsi = scsi
                     break
     except Exception as e:
-        logger.error("failed to check if storage SCSI mapping is present in VIOS")
-        raise e
+        raise Exception(f"failed to check if storage SCSI mapping is present in VIOS, error: {e}")
     return found, vscsi, soup
 
 
@@ -167,15 +165,12 @@ def get_system_uuid(config, cookies):
     response = requests.get(url, headers=headers,
                             cookies=cookies, verify=False)
     if response.status_code != 200:
-        logger.error(f"failed to get system UUID, error: {response.text}")
         raise Exception(f"failed to get system UUID, error: {response.text}")
     systems = []
     try:
         systems = response.json()
     except requests.JSONDecodeError as e:
-        logger.error(
-            f"failed to parse json while getting UUID of the system, error: {e}")
-        raise
+        raise Exception(f"failed to parse json while getting UUID of the system, error: {e}")
 
     uuid = ""
     sys_name = util.get_system_name(config)
@@ -185,7 +180,6 @@ def get_system_uuid(config, cookies):
             break
 
     if "" == uuid:
-        logger.error(f"no system available with name '{sys_name}'")
         raise Exception(f"no system available with name '{sys_name}'")
 
     return uuid

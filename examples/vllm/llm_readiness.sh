@@ -1,7 +1,7 @@
 #!/bin/bash
 
 URL="http://localhost:8000/v1/models"
-TIMEOUT=600
+TIMEOUT=1800
 INTERVAL=3
 elapsed=0
 

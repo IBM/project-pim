@@ -1,0 +1,10 @@
+version: 2
+ethernets:
+  env{{ config["partition"]["network"]["slot_num"] }}:
+    dhcp4: false
+    addresses:
+      - {{ config["partition"]["network"]["ip"]["address"] }}/{{ config["partition"]["network"]["ip"]["prefix-length"] }}
+    gateway4: {{ config["partition"]["network"]["ip"]["gateway"] }}
+    nameservers:
+      addresses:
+        - {{ config["partition"]["network"]["ip"]["nameserver"] }}

@@ -5,7 +5,7 @@ Wants=network-online.target cloud-config.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/env /bin/bash /usr/bin/base_config.sh
+ExecStart=/bin/true
 RemainAfterExit=yes
 TimeoutSec=0 
 

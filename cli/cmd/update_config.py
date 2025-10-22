@@ -81,16 +81,16 @@ def _update_config(config, cookies, sys_uuid):
             raise Exception(errorMsg)
 
         
-        # Restart pim_init.service
-        restart_command = "sudo systemctl restart pim_init.service"
+        # Restart base.service
+        restart_command = "sudo systemctl restart base.service"
         _, stdout, stderr = ssh_client.exec_command(restart_command)
         exit_status = stdout.channel.recv_exit_status()
 
         if exit_status == 0:
-            logger.info("Successfully restarted pim_init.service")
+            logger.info("Successfully restarted base.service")
         else:
             errorMsg = stderr.read().decode('utf-8')
-            logger.error(f"failed to restart pim_init.service. error: {errorMsg}")
+            logger.error(f"failed to restart base.service. error: {errorMsg}")
             raise Exception(errorMsg)
         
         os.remove(f"{common.cloud_init_update_config_dir}/pim_config.json")

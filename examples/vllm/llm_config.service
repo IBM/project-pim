@@ -1,7 +1,7 @@
 [Unit]
 Description=Mount and setup LLM config
-Requires=pim_init.service network-online.target cloud-config.target
-After=pim_init.service network-online.target cloud-config.target
+Requires=base.service network-online.target cloud-config.target
+After=base.service network-online.target cloud-config.target
 
 [Service]
 Type=oneshot

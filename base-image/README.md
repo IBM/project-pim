@@ -28,10 +28,10 @@ COPY usr/ /usr/
 Install cloud-init to configure AI image and PIM partition's network and user
 
 ```Dockerfile
-COPY pim_init.service /etc/systemd/system
+COPY base.service /etc/systemd/system
 
-RUN systemctl unmask pim_init.service
-RUN systemctl enable pim_init.service
+RUN systemctl unmask base.service
+RUN systemctl enable base.service
 ```
 systemd service to setup pimconfig like copying cloud init config and pim config files to respective directory
 

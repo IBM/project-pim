@@ -5,7 +5,7 @@ RUN dnf -y install cloud-init && \
     rm -rf /var/{cache,log} /var/lib/{dnf,rhsm}
 COPY usr/ /usr/
 
-COPY pim_init.service /etc/systemd/system
+COPY base.service /etc/systemd/system
 
-RUN systemctl unmask pim_init.service
-RUN systemctl enable pim_init.service
+RUN systemctl unmask base.service
+RUN systemctl enable base.service

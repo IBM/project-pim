@@ -20,3 +20,35 @@ AI image holds steps to run the AI application when it is deployed on a partitio
 Build the PIM based AI workload image using the `podman build` command
 
 A reference guide on building an AI workload is here [examples](../examples/README.md)
+
+## AI Application Bring-up Sequence
+
+Before starting the AI application, it’s crucial to ensure that all required configurations and dependent services are up and running. This guarantees that all prerequisites are satisfied and the AI application can start smoothly without failures.
+
+To define the startup sequence of services, the `.container` file uses two key directives: `Require` and `After`.
+
+### Service Dependency Directives
+
+* **Require:**
+  Specifies the list of services that must be started before the given service. If any of the required services fail to start, the dependent service will not start.
+
+* **After:**
+  Defines the startup order of services. A service will start only after all services listed in its `After` directive have been started.
+
+> **Note:**
+> Ensure that your `.container` file is properly configured with the correct `Require` and `After` directives to maintain the correct service hierarchy.
+
+### Example: HMC Agent Service Hierarchy
+
+In the **HMC Agent** example, the bring-up sequence follows a layered dependency structure:
+
+1. **base.service** – The starting point of the application, included in the base image.
+2. **llm_config.service** – Declares `Require=base.service` and runs only after `base.service` has started.
+3. **vllm.service** – Requires `llm_config.service` and waits until it completes before starting.
+4. **llm_readiness.service** – Starts after `vllm.service` to verify that the vLLM service is fully operational.
+5. **hmc_config.service** – Depends on `llm_readiness.service` to ensure the vLLM container is fully ready to handle incoming requests.
+6. **hmc_server.service** – Requires `hmc_config.service` to complete successfully, ensuring that all HMC configurations are in place before the server starts.
+7. **hmc_agent.service** – Depends on `hmc_server.service`, as the agent requires an active server to process requests, completing the bring-up chain.
+
+
+This sequence ensures that each service starts only after its dependencies are in active state, resulting in a smooth and reliable startup process for the AI application.

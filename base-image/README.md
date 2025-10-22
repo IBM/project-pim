@@ -15,7 +15,7 @@ There are three distros of bootc image available to use. Fedora, CentOS and RHEL
 
     **Note:**
     - You need Red Hat account to get the credentials to pull the image. 
-    - Need to build the image on RHEL machine where subsciption activated.
+    - Need to build the image on RHEL machine where subscription activated.
 
 
 
@@ -28,11 +28,10 @@ COPY usr/ /usr/
 Install cloud-init to configure AI image and PIM partition's network and user
 
 ```Dockerfile
-COPY base_config.sh /usr/bin/
-COPY base_config.service /etc/systemd/system
+COPY base.service /etc/systemd/system
 
-RUN systemctl unmask base_config.service
-RUN systemctl enable base_config.service
+RUN systemctl unmask base.service
+RUN systemctl enable base.service
 ```
 systemd service to setup pimconfig like copying cloud init config and pim config files to respective directory
 

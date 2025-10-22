@@ -5,8 +5,7 @@ RUN dnf -y install cloud-init && \
     rm -rf /var/{cache,log} /var/lib/{dnf,rhsm}
 COPY usr/ /usr/
 
-COPY base_config.sh /usr/bin/
-COPY base_config.service /etc/systemd/system
+COPY base.service /etc/systemd/system
 
-RUN systemctl unmask base_config.service
-RUN systemctl enable base_config.service
+RUN systemctl unmask base.service
+RUN systemctl enable base.service

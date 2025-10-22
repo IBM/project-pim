@@ -28,27 +28,37 @@ def generate_cloud_init_iso_config(config, slot_num, config_dir):
     file_loader = FileSystemLoader(f'{common.getclidir()}/cloud-init-iso/templates')
     env = Environment(loader=file_loader)
 
-    network_config_template = env.get_template('99_custom_network.cfg')
+    network_config_template = env.get_template('network-config')
     network_config_output = network_config_template.render(config=config)
-
-    common.create_dir(config_dir)
 
     pim_config_json = config["ai"]["config-json"] if config["ai"]["config-json"] != "" else "{}"
     pim_config_json = json.loads(pim_config_json)
 
     # 'workloadImage' is being used inside the bootstrap iso to write the bootc image into disk, in case of modification of this field name, needs same modification in bootstrap.iso too.
     pim_config_json["workloadImage"] = get_workload_image(config)
+    config["ai"]["config-json"] = json.dumps(pim_config_json, separators=(',', ':'))
 
-    pim_config_file = open(config_dir + "/pim_config.json", "w")
-    pim_config_file.write(json.dumps(pim_config_json))
+    auth_json = config["ai"]["auth-json"]
+    if auth_json == "":
+        auth_json = "{}"
+    else:
+        auth_data = json.loads(auth_json)
+        auth_json = json.dumps(auth_data, separators=(',', ':'))
+    config["ai"]["auth-json"] = auth_json
 
-    network_config_file = open(
-        config_dir + "/99_custom_network.cfg", "w")
+    user_data_template = env.get_template('user-data')
+    user_data_output = user_data_template.render(config=config)
+
+    common.create_dir(config_dir)
+
+    network_config_file = open(config_dir + "/network-config", "w")
     network_config_file.write(network_config_output)
+    
+    user_data_file = open(config_dir + "/user-data", "w")
+    user_data_file.write(user_data_output)
 
-    auth_json = "{}" if config["ai"]["auth-json"] == "" else config["ai"]["auth-json"]
-    auth_config_file = open(config_dir + "/auth.json", "w")
-    auth_config_file.write(auth_json)
+    open(config_dir+"/meta-data", "w")
+        
     logger.debug("Generated config files for the cloud-init ISO")
 
 
@@ -57,7 +67,7 @@ def generate_cloud_init_iso_file(iso_dir, config, config_dir):
     common.create_dir(iso_dir)
 
     cloud_init_image_name = get_cloud_init_iso(config)
-    generate_cmd = f"mkisofs -l -o {iso_dir}/{cloud_init_image_name} {config_dir}"
+    generate_cmd = f"mkisofs -l -volid cidata -joliet -o {iso_dir}/{cloud_init_image_name} -rock {config_dir}"
 
     try:
         subprocess.run(generate_cmd.split(), check=True, capture_output=True)

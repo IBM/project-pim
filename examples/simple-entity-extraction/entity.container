@@ -1,7 +1,7 @@
 [Unit]
 Description=Run simple entity extraction app
-Requires=vllm.service
-After=vllm.service
+Requires=llm_readiness.service
+After=llm_readiness.service
 
 [Service]
 Restart=on-failure

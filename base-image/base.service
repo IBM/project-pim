@@ -1,11 +1,11 @@
 [Unit]
-Description=Mount and setup pimconfig
+Description=Base service for AI application
 Before=network-online.target cloud-config.target
 Wants=network-online.target cloud-config.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/true
+ExecStart=/bin/sh -c 'echo "base.service completed successfully"'
 RemainAfterExit=yes
 TimeoutSec=0 
 

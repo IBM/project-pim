@@ -250,24 +250,26 @@ def validate_virtual_network_name(config, cookies, system_uuid):
 
 # Validate if the provided virtual switch name exists in the system
 def validate_virtual_switch_name(config, cookies, system_uuid):
-    uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/VirtualSwitch/quick/All"
-    url = "https://" +  get_host_address(config) + uri
-    headers = {"x-api-key": get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml"}
-    response = requests.get(url, headers=headers, cookies=cookies, verify=False)
-    if response.status_code != 200:
-        logger.error(f"failed to list virtual switch. {response.text}")
-        raise Exception("failed to list virtual switch")
-    
-    found = False
-    for switch in response.json():
-        # Remove '(Default)' from switch name before checking equality
-        if switch["SwitchName"].rstrip("(Default)") == get_vswitch_name(config):
-            found = True
-            break
-    
-    if not found:
-        logger.error(f"validation failed: 'partition.network.connection.virtual-switch-name' value '{get_vswitch_name(config)}' is not present in system")
-
+    try:
+        uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/VirtualSwitch/quick/All"
+        url = "https://" +  get_host_address(config) + uri
+        headers = {"x-api-key": get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml"}
+        response = requests.get(url, headers=headers, cookies=cookies, verify=False)
+        response.raise_for_status()
+        
+        found = False
+        for switch in response.json():
+            # Remove '(Default)' from switch name before checking equality
+            if switch["SwitchName"].rstrip("(Default)") == get_vswitch_name(config):
+                found = True
+                break
+        
+        if not found:
+            logger.error(f"validation failed: 'partition.network.connection.virtual-switch-name' value '{get_vswitch_name(config)}' is not present in system")
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"failed to list virtual switch while making http request, error: {e}, response: {e.response.text}")
+    except Exception as e:
+        raise Exception(f"failed to list virtual switch, error: {e}")
     return found
 
 def validate_json(value, field):

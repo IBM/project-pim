@@ -30,12 +30,12 @@ def _status(config, cookies, sys_uuid):
         logger.debug("Checking partition exists")
         exists, _, partition_uuid = partition.check_partition_exists(config, cookies, sys_uuid)
         if not exists:
-            logger.error(f"Partition named '{util.get_partition_name(config)}' not found")
+            logger.error(f"partition named '{util.get_partition_name(config)}' not found")
             return
 
         lpar_state = activation.check_lpar_status(config, cookies, partition_uuid)
         if lpar_state != "running":
-            logger.error(f"Partition '{util.get_partition_name(config)}' not in running state")
+            logger.error(f"partition '{util.get_partition_name(config)}' not in running state")
             return
         logger.info(f"PIM partition '{util.get_partition_name(config)}' is in running state")  
 

@@ -59,19 +59,21 @@ def check_if_scsi_mapping_exist(partition_uuid, vios, media_dev_name):
                     found = True
                     break
     except Exception as e:
-        logger.error("failed to check if storage SCSI mapping is present in VIOS")
-        raise e
+        raise StorageError(f"failed to check if storage SCSI mapping is present in VIOS, error: {e}")
     return found
 
 def attach_vopt(vios_payload, config, cookies, partition_uuid, sys_uuid, vios_uuid, vopt_name):
-    uri = f"/rest/api/uom/ManagedSystem/{sys_uuid}/VirtualIOServer/{vios_uuid}"
-    hmc_host = util.get_host_address(config)
-    url =  "https://" +  hmc_host + uri
-    headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=VirtualIOServer"}
-    payload = populate_payload(config, vios_payload, hmc_host, partition_uuid, sys_uuid, vopt_name)
-    response = requests.post(url, headers=headers, cookies=cookies, data=payload, verify=False)
+    try:
+        uri = f"/rest/api/uom/ManagedSystem/{sys_uuid}/VirtualIOServer/{vios_uuid}"
+        hmc_host = util.get_host_address(config)
+        url =  "https://" +  hmc_host + uri
+        headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=VirtualIOServer"}
+        payload = populate_payload(config, vios_payload, hmc_host, partition_uuid, sys_uuid, vopt_name)
+        response = requests.post(url, headers=headers, cookies=cookies, data=payload, verify=False)
 
-    if response.status_code != 200:
-        logger.error(f"failed to attach vOPT device to the partition, error: {response.text}")
-        raise StorageError(f"failed to attach vOPT device to the partition, error: {response.text}")
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise StorageError(f"failed to attach vOPT device to the partition while making http request, error: {e}, response: {e.response.text}")
+    except Exception as e:
+        raise StorageError(f"failed to attach vOPT device to the partition, error: {e}")
     return

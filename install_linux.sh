@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dnf install -y python3-pip libxml2-devel libxslt-devel rust cargo python-devel libffi-devel mkisofs
+dnf install -y python3-pip libxml2-devel libxslt-devel rust cargo python-devel libffi-devel xorriso
 dnf groupinstall -y "Development Tools"
 pip install uv
 

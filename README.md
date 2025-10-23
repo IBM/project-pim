@@ -20,41 +20,59 @@ PIM provides an end-to-end solution for AI stack installation by creating a Logi
 
 ## PIM Personas
 PIM has 2 personas, namely the builder and the deployer.
-- **Builder:** Someone who builds a bootable AI container image to bring up the AI stack with the deployer flow. Refer to [builder-guide.md](docs/builder-guide.md) for more details.
+- **Builder:** Someone who builds a bootable AI container image to bring up the AI stack with the deployer flow. We have provided pre-built PIM Bootc images for various example applications, it is recommended to use them. If you want to create and deploy a new application or you want to build the PIM bootc images by yourself please refer to [builder-guide.md](docs/builder-guide.md) for more details.
 - **Deployer:** Someone who deploys a PIM solution to bring up the AI stack in IBM core environments. Refer to [deployer-guide.md](docs/deployer-guide.md) for more details.
 
 ## Getting started
-To get started, you can follow steps below to build and deploy a simple entity extraction application which uses vLLM.
-### Builder steps
-- **Step 1: Build the application**
-    - ***vLLM:***
-        - Open source [vLLM](https://github.com/vllm-project/vllm) application can be used.
-    - ***Entity Extraction App:***
-        - A sample entity extraction application is provided [here](examples/simple-entity-extraction/app/entity.py) that uses the OpenAI `/chat/completion` API to do entity extraction.
-- **Step 2: Containerize the application**
-    - ***vLLM:***
-        - Follow the instructions in the [README](examples/vllm/app/README.md) to build the vLLM application's container image. It has a script that pulls open-source vLLM code base and builds a container image.
-    - ***Entity Extraction App:***
-        - [README](examples/simple-entity-extraction/app/README.md) for steps to build the container image for an entity extraction application.
-- **Step 3: Build the Base image**
-    - Follow base image building steps given [here](base-image/README.md).
-- **Step 4: Build the AI image**
-    - ***vLLM:***
-        - Follow steps given [here](examples/vllm/README.md) to build the vLLM AI image, ensure that you use the image created in `step-3` as base image(FROM).
-    - ***Entity Extraction App:***
-        - Scripts and README to build the AI image are given [here](examples/simple-entity-extraction/README.md), ensure that you use the vLLM AI image created in the previous step as base image(FROM) here.
-### Deployer steps
+To get started, you can use the default [config.ini](config.ini) which has pre-built PIM Bootc images loaded to deploy an vLLM stack. 
 - **Step 1: Set up PIM**
-    - You can follow the steps to set up PIM on your IBMi/Linux machine given [here](docs/deployer-guide.md#installation) and please go over the [Prerequisites](docs/deployer-guide.md#prerequisites) section here before deploying a AI partition.
+    - You can follow the steps given [here](docs/deployer-guide.md#installation) to set up PIM Cli on your IBMi/Linux machine and please go over the [Prerequisites](docs/deployer-guide.md#prerequisites) section here before deploying the AI partition.
 - **Step 2: Configure your AI partition**
     - Read through this [guide](docs/configuration-guide.md) and fill appropriate values in [config.ini](config.ini).
-    - Use final image built on builder step 4 in `ai.image` field.
+    - You can skip the AI portion since the default configuration provided will just work fine. Instructions to build your own AI stack via PIM is detailed [here](#build-your-own-pim-stack)
 - **Step 3: Run the Launch Command**
 ```shell
 python cli/pim.py launch
 ```
 - **Step 4: Access the application**
-    - After the ```launch``` command successfully creates the partition, you can access the UI for the entity extraction application on port ```8501```, using the IP address provided during the launch configuration in config.ini.
+    - After the ```launch``` command successfully creates the partition, vLLM’s OpenAI API server will be available to use on port 8000 on the IP you have configured.
+
+## Build your own PIM AI stack
+This section details how to build your own PIM AI stack, for example we have taken one of our AI examples provided, simple-entity-extraction. Simple entity extraction is an AI tool designed to extract entities from the given text with the help of vLLM. 
+
+This AI stack contains two components
+1. **Entity Extraction Python app** - An UI framework to get input from user, build prompt and send it to vLLM for processing it. 
+2. **vLLM** - Run the prompt to extract entities.
+
+Steps to build the AI Image:
+- **Step 1: Build the application**
+    - ***vLLM:***
+        - Open source [vLLM](https://github.com/vllm-project/vllm) application will be used.
+    - ***Entity Extraction App:***
+        - A sample entity extraction application is provided [here](examples/simple-entity-extraction/app/entity.py) that uses the vLLM's OpenAI `/chat/completion` API to do the entity extraction.
+- **Step 2: Containerize the application**
+    - ***vLLM:***
+        - Recommended to use below vLLM application image built and published [here](https://community.ibm.com/community/user/blogs/priya-seth/2023/04/05/open-source-containers-for-power-in-icr) by IBM on Linux Power team.
+        ```
+        icr.io/ppc64le-oss/vllm-ppc64le:0.10.1.dev852.gee01645db.d20250827
+        ```
+        - Or you can use your own image or use the script provided [here](examples/vllm/app) to build it from source
+    - ***Entity Extraction App:***
+        - [README](examples/simple-entity-extraction/app) for steps to build the container image for the entity extraction application.
+- **Step 3: Build the PIM Bootc image**
+    Step 2 details the process of containarizing the applications involved in the AI stack. This step is required to build the Bootc image required to bringup the AI stack. It orchestrates the vLLM and Entity Extraction Python applications in separate containers when we create the AI partition out of this built image. 
+    - ***vLLM:***
+        - Recommended to use below PIM Bootc image built by PIM team
+        ```
+        quay.io/powercloud/pim:vllm
+        ```
+        - Or you can build your own image by following the [README](examples/vllm/README.md#build-from-source)
+    - ***Entity Extraction App:***
+        - Application, build scripts and README to build the AI image are given [here](examples/simple-entity-extraction), ensure that you use the vLLM AI image mentioned in the previous step as base image(FROM) here.
+    
+    **Note:** In the example used here uses vLLM in its functionality, hence used vLLM as a base image for building the Entity Extraction PIM Bootc image. In case vLLM is not required use cases like traditional ML use case, you can use the [base-image](base-image/).
+
+Once your final PIM Bootc image is built with the above steps, you can deploy PIM stack via deployer flow documented [here](docs/deployer-guide.md).
 
 ## Supported Versions
 To successfully deploy PIM, various components of the IBM Power software stack would at the minimum have to be at the levels listed below:

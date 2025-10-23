@@ -2,9 +2,10 @@
 
 ## Containerfile
 ```Dockerfile
-FROM quay.io/fedora/fedora-bootc@sha256:255a49c3e1011670b8b039276de3fe8bef5e7c1de5f06f6fb9d1dd8a6084d600
+FROM quay.io/fedora/fedora-bootc:43-ppc64le
 ```
-Base image used is `quay.io/fedora/fedora-bootc:43-ppc64le`, image digest is used since the image is getting updated frequently, don't want to change the behaviour in future.
+Used Fedora bootc image as base image which can be converted into an bootable medium via [bootc](https://github.com/bootc-dev/bootc) or [bootc-image-builder](https://github.com/osbuild/bootc-image-builder).
+
 There are three distros of bootc image available to use. Fedora, CentOS and RHEL
 ### Fedora/CentOS
 - Fedora and CentOS bootc images are available in Open Source, you can consume from their quay registry.
@@ -37,12 +38,18 @@ RUN systemctl enable base_config.service
 systemd service to setup pimconfig like copying cloud init config and pim config files to respective directory
 
 ## Build
+We have pre-built the base-image and its available to consume directly via below image
+```
+quay.io/powercloud/pim:base
+``` 
 
-Run the build in a RHEL machine with proper subscription activated. `podman build` will use the build machine's host subscription to install pkgs in PIM image.
+If you wish to build your own version, you can follow below steps to build it.
+
+**Note:** When RHEL bootc image is used to create base-image, run the build in a RHEL machine with proper subscription activated. `podman build` will use the build machine's host subscription to install pkgs in PIM image.
 
 ```shell
 podman build -t localhost/pim-base .
 
-podman tag localhost/pim-base quay.io/<account id>/pim:base
-podman push quay.io/<account id>/pim:base
+podman tag localhost/pim-base quay.io/<account-id>/pim:base
+podman push quay.io/<account-id>/pim:base
 ```

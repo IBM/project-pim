@@ -6,7 +6,7 @@ certifi==2025.6.15
 cffi==1.17.1
 charset-normalizer==3.4.2
 configobj==5.0.9
-cryptography==45.0.4
+cryptography==45.0.7
 idna==3.10
 jinja2==3.1.6
 lxml==6.0.0

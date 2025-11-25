@@ -84,10 +84,8 @@ def get_lpar_update_payload(config, curr_lpar_payload):
         max_memory = lpar_mem_config.find("MaximumMemory")
         desired_memory = lpar_mem_config.find("DesiredMemory")
         if min_memory is None or max_memory is None or desired_memory is None:
-            logger.error(
-                "XML parsing error: Unable to find memory configs from partition payload")
-            raise Exception(
-                "XML parsing error: Unable to find memory configs from partition payload")
+            raise PartitionError(
+                "xml parsing error: unable to find memory configs from partition payload")
         min_memory.string.replace_with(
             str(convert_gb_to_mb(util.get_min_memory(config))))
         max_memory.string.replace_with(
@@ -98,36 +96,27 @@ def get_lpar_update_payload(config, curr_lpar_payload):
         lpar_cpu_config = curr_lpar.find("PartitionProcessorConfiguration")
         partition_name = curr_lpar.find("PartitionName")
         if util.has_dedicated_proc(config) == "true":
-            logger.debug("update-compute: dedicated proc mode")
             desired_proc = lpar_cpu_config.find("DesiredProcessors")
             min_proc = lpar_cpu_config.find("MinimumProcessors")
             max_proc = lpar_cpu_config.find("MaximumProcessors")
             if desired_proc is None or min_proc is None or max_proc is None:
-                logger.error(
-                    "XML parsing error: Unable to find processor configs from partition payload")
-                raise Exception(
-                    "XML parsing error: Unable to find processor configs from partition payload")
+                raise PartitionError(
+                    "xml parsing error: unable to find processor configs from partition payload")
             desired_proc.string.replace_with(util.get_desired_proc(config))
             min_proc.string.replace_with(util.get_min_proc(config))
             max_proc.string.replace_with(util.get_max_proc(config))
         else:
             # Switch from dedicated to shared processor config
-            logger.debug("update-compute: shared proc mode")
             if lpar_cpu_config is None:
-                logger.error(
-                    "XML parsing error: Unable to find processor configs from partition payload")
-                raise Exception(
-                    "XML parsing error: Unable to find processor configs from partition payload")
+                raise PartitionError(
+                    "xml parsing error: unable to find processor configs from partition payload")
             lpar_cpu_config.decompose()
-            logger.debug("get new shared processor config")
             new_proc_config = BeautifulSoup(
                 get_processor_config(config), 'xml')
             partition_name.insert_after(new_proc_config)
         lpar_payload = curr_lpar
     except Exception as e:
-        logger.error(
-            "Exception while getting partition cpu or memory configurations")
-        raise e
+        raise PartitionError(f"failed to get partition's compute(cpu & memory) configurations, error: {e}")
     return lpar_payload
 
 
@@ -136,16 +125,18 @@ def convert_gb_to_mb(value):
 
 
 def get_all_partitions(config, cookies, system_uuid):
-    uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/LogicalPartition/quick/All"
-    url = "https://" + util.get_host_address(config) + uri
-    headers = {"x-api-key": util.get_session_key(config)}
-    response = requests.get(url, headers=headers,
-                            cookies=cookies, verify=False)
-    if response.status_code != 200:
-        logger.error(f"failed to get partition list, error: {response.text}")
-        raise PartitionError(
-            f"failed to get partition list, error: {response.text}")
-    return response.json()
+    try:
+        uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/LogicalPartition/quick/All"
+        url = "https://" + util.get_host_address(config) + uri
+        headers = {"x-api-key": util.get_session_key(config)}
+        response = requests.get(url, headers=headers,
+                                cookies=cookies, verify=False)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        raise PartitionError(f"failed to get partition list, while making http request, error: {e}, response: {e.response.text}")
+    except Exception as e:
+        raise PartitionError(f"failed to get partition list, error: {e}")  
 
 
 # Checks if partition exists, returns exists and if partition is created by PIM
@@ -176,40 +167,43 @@ def check_partition_exists(config, cookies, system_uuid):
 
 
 def create_partition(config, cookies, system_uuid):
-    logger.debug(
-        f"Creating partition with name '{util.get_partition_name(config)}'")
-    uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/LogicalPartition"
-    url = "https://" + util.get_host_address(config) + uri
-    payload = populate_payload(config)
-    headers = {"x-api-key": util.get_session_key(config),
-               "Content-Type": CONTENT_TYPE}
-    response = requests.put(url, headers=headers,
-                            data=payload, cookies=cookies, verify=False)
-    if response.status_code != 200:
-        logger.error(f"failed to create partition, error: {response.text}")
-        raise PartitionError(
-            f"failed to create partition, error: {response.text}")
+    try:
+        logger.debug(
+            f"Creating partition with name '{util.get_partition_name(config)}'")
+        uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/LogicalPartition"
+        url = "https://" + util.get_host_address(config) + uri
+        payload = populate_payload(config)
+        headers = {"x-api-key": util.get_session_key(config),
+                "Content-Type": CONTENT_TYPE}
+        response = requests.put(url, headers=headers,
+                                data=payload, cookies=cookies, verify=False)
+        response.raise_for_status()
 
-    soup = BeautifulSoup(response.text, 'xml')
-    partition_uuid = soup.find("PartitionUUID")
-    return partition_uuid.text
+        soup = BeautifulSoup(response.text, 'xml')
+        partition_uuid = soup.find("PartitionUUID")
+        return partition_uuid.text
+    except requests.exceptions.RequestException as e:
+        raise PartitionError(f"failed to create partition, while making http request, error: {e}, response: {e.response.text}")
+    except Exception as e:
+        raise PartitionError(f"failed to create partition, error: {e}")  
 
 
 def get_partition_details(config, cookies, system_uuid, partition_uuid):
-    uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/LogicalPartition/{partition_uuid}"
-    url = "https://" + util.get_host_address(config) + uri
-    headers = {"x-api-key": util.get_session_key(config),
-               "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=LogicalPartition"}
-    response = requests.get(url, headers=headers,
-                            cookies=cookies, verify=False)
-    if response.status_code != 200:
-        logger.error(
-            f"failed to get partition details, error: {response.text}")
-        raise PartitionError(
-            f"failed to get partition details, error: {response.text}")
-    soup = BeautifulSoup(response.text, 'xml')
-    lpar = str(soup.find('LogicalPartition'))
-    return lpar
+    try:
+        uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/LogicalPartition/{partition_uuid}"
+        url = "https://" + util.get_host_address(config) + uri
+        headers = {"x-api-key": util.get_session_key(config),
+                "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=LogicalPartition"}
+        response = requests.get(url, headers=headers,
+                                cookies=cookies, verify=False)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'xml')
+        lpar = str(soup.find('LogicalPartition'))
+        return lpar
+    except requests.exceptions.RequestException as e:
+        raise PartitionError(f"failed to get partition details, while making http request, error: {e}, response: {e.response.text}")
+    except Exception as e:
+        raise PartitionError(f"failed to get partition details, error: {e}")  
 
 
 def edit_lpar_compute(config, cookies, system_uuid, partition_uuid):
@@ -219,8 +213,6 @@ def edit_lpar_compute(config, cookies, system_uuid, partition_uuid):
         updated_lpar_payload = get_lpar_update_payload(
             config, partition_payload)
         if updated_lpar_payload is None:
-            logger.error(
-                f"failed to get updated lpar compute payload, error: {response.text}")
             raise PartitionError(
                 f"failed to get updated lpar compute payload, error: {response.text}")
 
@@ -232,34 +224,33 @@ def edit_lpar_compute(config, cookies, system_uuid, partition_uuid):
                    "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=LogicalPartition"}
         response = requests.post(url, headers=headers, cookies=cookies, data=str(
             updated_lpar_payload), verify=False)
-        if response.status_code != 200:
-            logger.error(
-                f"failed to edit lpar compute, error: {response.text}")
-            raise PartitionError(
-                f"failed to edit lpar compute, error: {response.text}")
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise PartitionError(f"failed to edit lpar compute, while making http request, error: {e}, response: {e.response.text}")
     except Exception as e:
-        raise e
+        raise Exception(f"failed to edit lpar compute, error: {e}")
     logger.debug(
         f"Compute for partition: {partition_uuid} is updated successfully")
     return
 
 
 def set_partition_boot_string(config, cookies, system_uuid, partition_uuid, partition_payload, boot_string):
-    uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/LogicalPartition/{partition_uuid}"
-    url = "https://" + util.get_host_address(config) + uri
-    headers = {"x-api-key": util.get_session_key(config),
-               "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=LogicalPartition"}
-    payload = BeautifulSoup(partition_payload, 'xml')
-    pending_boot = payload.find("PendingBootString")
-    pending_boot.append(boot_string)
+    try:
+        uri = f"/rest/api/uom/ManagedSystem/{system_uuid}/LogicalPartition/{partition_uuid}"
+        url = "https://" + util.get_host_address(config) + uri
+        headers = {"x-api-key": util.get_session_key(config),
+                "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=LogicalPartition"}
+        payload = BeautifulSoup(partition_payload, 'xml')
+        pending_boot = payload.find("PendingBootString")
+        pending_boot.append(boot_string)
 
-    response = requests.post(url, headers=headers,
-                             cookies=cookies, data=str(payload), verify=False)
-    if response.status_code != 200:
-        logger.error(
-            f"failed to update boot order for the partition: '{partition_uuid}', error: {response.text}")
-        raise PartitionError(
-            f"failed to update boot order for the partition: '{partition_uuid}', error: {response.text}")
+        response = requests.post(url, headers=headers,
+                                cookies=cookies, data=str(payload), verify=False)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise PartitionError(f"failed to update boot order for the partition: '{partition_uuid}' while making http request, error: {e}, response: {e.response.text}")
+    except Exception as e:
+        raise Exception(f"failed to update boot order for the partition: '{partition_uuid}', error: {e}")
     logger.debug(
         f"Updated the boot order for the partition: '{partition_uuid}'")
     return
@@ -273,6 +264,6 @@ def remove_partition(config, cookies, partition_uuid):
     response = requests.delete(
         url, headers=headers, cookies=cookies, verify=False)
     if response.status_code != 204:
-        logger.error(f"failed to delete partition, error: {response.text}")
+        logger.error(f"failed to delete partition, error: '{response.text}'")
         return
     logger.debug("Partition deleted successfully")

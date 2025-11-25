@@ -75,11 +75,11 @@ def get_volume_group_id(config, cookies, vios_uuid, vg_name):
     headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
     try:
         response = requests.get(url, headers=headers, cookies=cookies, verify=False)
-        if response.status_code != 200:
-            logger.error(f"failed to get volume group: '{response.text}'")
-            raise Exception("failed to get volume group")
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise StorageError(f"failed to get volume group while making http request, error: {e}, response: {e.response.text}")
     except Exception as e:
-        raise e
+        raise StorageError(f"failed to get volume group, error: {e}")
 
     soup = BeautifulSoup(response.text, 'xml')
     entries = soup.find_all("entry")
@@ -89,8 +89,7 @@ def get_volume_group_id(config, cookies, vios_uuid, vg_name):
         if vol_group.find("GroupName").text == vg_name:
             vg_id = entry.find("id").text
     if vg_id is None:
-        logger.error(f"failed to find volumegroup id corresponding to volumegroup name '{vg_name}'")
-        raise StorageError(f"failed to find volumegroup id corresponding to volumegroup name '{vg_name}'")
+        raise StorageError(f"no matching volumegroup found corresponding to volumegroup name '{vg_name}'")
     return vg_id
 
 def get_volume_group_details(config, cookies, vios_uuid, vg_id):
@@ -100,11 +99,11 @@ def get_volume_group_details(config, cookies, vios_uuid, vg_id):
     headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
     try:
         response = requests.get(url, headers=headers, cookies=cookies, verify=False)
-        if response.status_code != 200:
-            logger.error(f"failed to get volume group details: '{response.text}'")
-            raise Exception("failed to get volume group details")
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise StorageError(f"failed to get volume group while making http request, error: {e}, response: {e.response.text}")
     except Exception as e:
-        raise e
+        raise StorageError(f"failed to get volume group details, error: {e}")
     soup = BeautifulSoup(response.text, 'xml')
     vol_group_details = str(soup.find("VolumeGroup"))
     return vol_group_details
@@ -132,9 +131,7 @@ def check_if_vdisk_attached(vios, partition_uuid):
                         vdisk = logical_vol.find("DiskName").text
                         break
     except Exception as e:
-        logger.error(
-            "failed to check if storage SCSI mapping is present in VIOS")
-        raise e
+        raise StorageError(f"failed to check if storage SCSI mapping is present in VIOS, error: {e}")
     return found, vdisk
 
 # Checks if virtualdisk is created under a given volumegroup
@@ -145,11 +142,7 @@ def check_if_vdisk_exists(config, cookies, vios_uuid, vg_id, vdisk):
             config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; type=VolumeGroup"}
         response = requests.get(url, headers=headers,
                                 cookies=cookies, verify=False)
-        if response.status_code != 200:
-            logger.error(
-                f"failed to get volumegroup details, error: '{response.text}'")
-            raise Exception(
-                f"failed to get volumegroup details, error: '{response.text}'")
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, 'xml')
 
         # remove virtual disk
@@ -163,8 +156,11 @@ def check_if_vdisk_exists(config, cookies, vios_uuid, vg_id, vdisk):
                 present = True
                 virt_disk_xml = disk
                 break
+    except requests.exceptions.RequestException as e:
+        raise StorageError(f"failed to get volumegroup details while making http request, error: {e}, response: {e.response.text}")
     except Exception as e:
-        raise e
+        raise StorageError(
+                f"failed to get volumegroup details, error: '{e}'")
     return present, virt_disk_xml, volume_group
 
 def create_virtualdisk(config, cookies, vios_uuid, vg_id):
@@ -178,11 +174,12 @@ def create_virtualdisk(config, cookies, vios_uuid, vg_id):
     try:
         payload = get_vdisk_payload(config, vg_details)
         response = requests.post(url, headers=headers, cookies=cookies, data=payload, verify=False)
-        if response.status_code != 200:
-            logger.error(f"failed to create virtual disk: '{response.text}'")
-            raise StorageError(f"failed to create virtual disk")
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise StorageError(f"failed to create virtual disk while making http request, error: {e}, response: {e.response.text}")
     except Exception as e:
-        raise e
+        raise StorageError(f"failed to create virtual disk, error: {e}")
+
     logger.info("Successfully created virtual disk")
 
 def attach_virtualdisk(vios_payload, config, cookies, partition_uuid, system_uuid, vios_uuid):
@@ -192,9 +189,9 @@ def attach_virtualdisk(vios_payload, config, cookies, partition_uuid, system_uui
     headers = {"x-api-key": util.get_session_key(config), "Content-Type": "application/vnd.ibm.powervm.uom+xml; Type=VirtualIOServer"}
     try:
         response = requests.post(url, headers=headers, cookies=cookies, data=payload, verify=False)
-        if response.status_code != 200:
-            logger.error(f"failed to attach virtual storage to the partition: '{response.text}'")
-            raise StorageError(f"failed to attach virtual storage to the partition")
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise StorageError(f"failed to attach virtual storage to the partition while making http request, error: {e}, response: {e.response.text}")
     except Exception as e:
-        raise e
+        raise StorageError(f"failed to attach virtual storage to the partition, error: {e}")
     logger.info("Successfully attached virtual disk")

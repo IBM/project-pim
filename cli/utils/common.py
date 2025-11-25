@@ -53,8 +53,7 @@ def create_dir(path):
         if not os.path.isdir(path):
             os.mkdir(path)
     except OSError as e:
-        logger.error(f"failed to create '{path}' directory, error: {e}")
-        raise
+        raise Exception(f"failed to create '{path}' directory, error: {e}")
 
 
 def file_checksum(file):
@@ -142,8 +141,6 @@ def ssh_to_partition(config):
             break
         except Exception as e:
             if i == 49:
-                logger.error(
-                    f"failed to establish SSH connection to partition after 50 retries, error: {e}")
                 raise paramiko.SSHException(
                     f"failed to establish SSH connection to partition after 50 retries, error: {e}")
             logger.debug("Not able to SSH to the partition yet, retrying..")
@@ -156,8 +153,7 @@ def create_dir(path):
         if not os.path.isdir(path):
             os.mkdir(path)
     except OSError as e:
-        logger.error(f"failed to create '{path}' directory, error: {e}")
-        raise
+        raise Exception(f"failed to create '{path}' directory, error: {e}")
 
 
 def initialize_config(config_file_path):
@@ -169,8 +165,7 @@ def initialize_config(config_file_path):
             flavor_name = util.get_partition_flavor(config)
             config["partition-flavor"] = load_partition_flavor(flavor_name)
     except Exception as e:
-        logger.error(f"failed to parse {config_file_path}, error: {e}")
-        raise e
+        raise Exception(f"failed to parse {config_file_path}, error: {e}")
     return config
 
 
@@ -198,10 +193,8 @@ def generate_ssh_keys(config):
     result = subprocess.run(
         cmd, capture_output=True, text=True, shell=True)
     if result.returncode != 0:
-        logger.error(
-            f"failed to run ssh-keygen command to generate keypair, error: {result.stderr} \n {result.stdout}")
         raise Exception(
-            f"failed to run ssh-keygen command to generate keypair, error: {result.stderr}")
+            f"failed to run ssh-keygen command to generate keypair, error: {result.stderr}\n {result.stdout}")
     logger.debug("SSH keypair generated successfully")
 
 # Compares dir1 & dir2 and returns True if there is a difference(either new files introduced in dir2 or changes in file contents between the two dirs)

@@ -1,7 +1,14 @@
 #!/bin/bash
 
-dnf install -y python3-pip libxml2-devel libxslt-devel rust cargo python-devel libffi-devel mkisofs
+dnf install -y python3-pip libxml2-devel libxslt-devel python-devel libffi-devel mkisofs
 dnf groupinstall -y "Development Tools"
+
+# Install Rust - try rust-toolset first, fallback to rust+cargo (older versions)
+dnf install -y rust-toolset || dnf install -y rust cargo
+
+# Upgrade pip to latest version
+pip install --upgrade pip
+
 pip install uv
 
 # Clone source code from github repo

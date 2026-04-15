@@ -75,7 +75,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 RUN pip install /arrowwheels/pyarrow-19.0.1-cp312-cp312-linux_ppc64le.whl
 
-RUN pip install requests==2.32.3 streamlit==1.45.1
+RUN pip install requests==2.33.0 streamlit==1.54.0
 
 COPY entity.py /etc/entity.py
 

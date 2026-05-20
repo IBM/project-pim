@@ -1,6 +1,6 @@
 # Versions pointing to the pkg versions available in Linux
 bcrypt==4.3.0
-beautifulsoup4==4.13.4
+beautifulsoup4==4.14.3
 bs4==0.0.2
 certifi==2025.6.15
 cffi>=1.17.1

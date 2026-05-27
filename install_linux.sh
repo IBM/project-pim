@@ -3,6 +3,11 @@
 dnf install -y python3-pip libxml2-devel libxslt-devel python-devel libffi-devel mkisofs
 dnf groupinstall -y "Development Tools"
 
+# Install ISO creation tool
+# Try mkisofs (older systems) or xorriso (preferred for newer systems)
+# Note: xorriso package provides mkisofs compatibility wrapper automatically
+dnf install -y mkisofs || dnf install -y xorriso
+
 # Install Rust - try rust-toolset first, fallback to rust+cargo (older versions)
 dnf install -y rust-toolset || dnf install -y rust cargo
 

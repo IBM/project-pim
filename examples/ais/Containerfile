@@ -1,0 +1,43 @@
+FROM registry.access.redhat.com/ubi9/ubi:latest AS builder
+
+ARG BUILD_METHOD=build
+ARG BRANCH=main
+ARG RELEASE=v0.3.0
+ARG ARCH=ppc64le
+
+# Install dependencies
+RUN dnf install -y git make golang && dnf clean all
+
+# Set Go environment to allow downloading required Go version
+ENV GOTOOLCHAIN=auto
+
+WORKDIR /build
+
+# Build from source or download based on BUILD_METHOD
+RUN if [ "$BUILD_METHOD" = "build" ]; then \
+        echo "Building from source (branch: $BRANCH)..."; \
+        git clone --branch "$BRANCH" https://github.com/IBM/project-ai-services.git && \
+        cd project-ai-services/ai-services && \
+        make bin && \
+        cp bin/ai-services-* /build/ai-services; \
+    else \
+        echo "Downloading from release ($RELEASE)..."; \
+        curl -Lo /build/ai-services "https://github.com/IBM/project-ai-services/releases/download/${RELEASE}/ai-services-linux-${ARCH}" && \
+        chmod +x /build/ai-services; \
+    fi
+
+FROM quay.io/powercloud/pim:base
+
+# Copy ai-services binary from builder stage
+COPY --from=builder /build/ai-services /usr/local/bin/ai-services
+RUN chmod +x /usr/local/bin/ai-services
+
+# Install required packages for running ai-services
+RUN dnf install -y expect && dnf clean all
+
+COPY ais_config.sh /usr/bin/
+COPY ais_config.service /etc/systemd/system/
+
+# Unmask and enable the setup service
+RUN systemctl unmask ais_config.service && \
+    systemctl enable ais_config.service

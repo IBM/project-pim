@@ -8,7 +8,7 @@ from cli.utils.common import *
 from cli.utils.string_util import *
 
 logger = get_logger("validator")
-supported_versions = ["1110.01", "1110.00", "1060.51", "1060.50", "1050.51",  "1050.50"]
+supported_versions = ["ML1060_fw1060.71 (173)","VL950_FW950.A0 (145)", "1110.01", "1110.00", "1060.51", "1060.50", "1050.51",  "1050.50"]
 
 def validate_config(config):
     is_mandatory_param_valid = validate_mandatory_params(config)

@@ -141,6 +141,8 @@ def get_all_partitions(config, cookies, system_uuid):
     headers = {"x-api-key": util.get_session_key(config)}
     response = requests.get(url, headers=headers,
                             cookies=cookies, verify=False)
+    if response.status_code == 204:
+        return []
     if response.status_code != 200:
         logger.error(f"failed to get partition list, error: {response.text}")
         raise PartitionError(

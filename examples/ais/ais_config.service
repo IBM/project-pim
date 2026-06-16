@@ -1,0 +1,18 @@
+[Unit]
+Description=Mount and setup AIS config
+Wants=network-online.target
+After=base_config.service network-online.target cloud-config.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/pim/env.conf
+ExecStart=/bin/bash /usr/bin/ais_config.sh
+RemainAfterExit=yes
+TimeoutSec=0
+Restart=on-failure
+RestartSec=15
+
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

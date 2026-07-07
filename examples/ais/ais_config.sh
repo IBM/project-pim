@@ -10,14 +10,6 @@ AIS_ADMIN_PASSWORD=$(jq -r '.aisAdminPassword // "admin123"' /etc/pim/pim_config
 
 echo "=== Starting AI Services Setup ==="
 
-# Simulate podman login by placing auth.json where ai-services expects it
-# ai-services reads from /run/user/<uid>/containers/auth.json (never REGISTRY_AUTH_FILE)
-echo "Copy auth file"
-mkdir -p /run/user/$(id -u)/containers
-mkdir -p /root/.config/containers
-cp /etc/pim/auth.json /run/user/$(id -u)/containers/auth.json
-cp /etc/pim/auth.json /root/.config/containers/auth.json
-
 # 1. Explicitly export XDG_RUNTIME_DIR for the systemd environment
 export XDG_RUNTIME_DIR=/run/user/$(id -u)
 

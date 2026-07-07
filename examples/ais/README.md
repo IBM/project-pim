@@ -42,15 +42,12 @@ podman build --build-arg BUILD_METHOD=build --build-arg BRANCH=feature/new-api -
 # Download specific release
 podman build --build-arg BUILD_METHOD=download --build-arg RELEASE=v0.3.0 -t <your-registry>/pim:ais .
 
-# Download for different architecture
-podman build --build-arg BUILD_METHOD=download --build-arg RELEASE=v0.3.0 --build-arg ARCH=amd64 -t <your-registry>/pim:ais .
 ```
 
 **Build Arguments:**
 - `BUILD_METHOD`: `build` (default) or `download`
 - `BRANCH`: Git branch to build from (default: `main`)
 - `RELEASE`: Release version to download (default: `v0.3.0`)
-- `ARCH`: Architecture for binary download (default: `ppc64le`, options: `ppc64le`, `amd64`, `arm64`, `s390x`)
 
 ##### Step 3: Push the image
 

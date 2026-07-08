@@ -6,6 +6,9 @@ After=base_config.service network-online.target cloud-config.target
 [Service]
 Type=oneshot
 EnvironmentFile=/etc/pim/env.conf
+Environment=GOPATH=/tmp/go
+Environment=GOMODCACHE=/tmp/go/pkg/mod
+Environment=GOCACHE=/tmp/go-cache
 ExecStart=/bin/bash /usr/bin/ais_config.sh
 RemainAfterExit=yes
 TimeoutSec=0

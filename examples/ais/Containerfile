@@ -1,0 +1,16 @@
+FROM quay.io/powercloud/pim:base
+
+# Disable SELinux labeling for Podman to allow ai-services kube play to function
+RUN mkdir -p /etc/containers/containers.conf.d && \
+    echo -e "[containers]\nlabel = false" > /etc/containers/containers.conf.d/99-disable-selinux.conf
+
+# Install required packages for building/downloading and running ai-services
+RUN dnf install -y git make golang curl expect && dnf clean all
+
+COPY ais_config.sh /usr/bin/
+COPY ais_config.service /etc/systemd/system/
+
+# Unmask and enable the setup service
+RUN systemctl unmask ais_config.service && \
+    systemctl enable ais_config.service && \
+    systemctl enable podman.socket

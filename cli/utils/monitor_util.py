@@ -57,6 +57,7 @@ def monitor_pim(config):
     if get_ai_app_request(config) == "no":
         logger.info(
             "Skipping AI application validation since 'ai.validation.request' set to False")
+        return
 
     # Validate the AI application deployed via PIM partition with the request details provided in 'ai.validation'
     logger.info("Validate AI application launched via PIM")

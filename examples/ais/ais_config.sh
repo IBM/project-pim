@@ -11,6 +11,12 @@ AIS_ADMIN_PASSWORD=$(jq -r '.adminPassword // "admin123"' /etc/pim/pim_config.js
 # Get ai-services release version from pim_config.json
 RELEASE=$(jq -r '.release // "main"' /etc/pim/pim_config.json)
 
+set +x
+# Get RHSM credentials from pim_config.json
+RHSM_USERNAME=$(jq -r '.rhsmUsername // ""' /etc/pim/pim_config.json)
+RHSM_PASSWORD=$(jq -r '.rhsmPassword // ""' /etc/pim/pim_config.json)
+set -x
+
 echo "=== Starting AI Services Setup ==="
 AIS_PATH="/tmp/ai-services"
 # Build or download ai-services binary based on RELEASE
@@ -63,13 +69,27 @@ if [ ! -x "$AIS_PATH" ]; then
     exit 1
 fi
 
-# 1. Explicitly export XDG_RUNTIME_DIR for the systemd environment
-export XDG_RUNTIME_DIR=/run/user/$(id -u)
+{ set +x; } 2>/dev/null
+# Register with Red Hat Subscription Manager if credentials are provided
+if [ -n "$RHSM_USERNAME" ] && [ -n "$RHSM_PASSWORD" ]; then
+    echo "Registering with Red Hat Subscription Manager..."
+    subscription-manager register --username "$RHSM_USERNAME" --password "$RHSM_PASSWORD"
+    RHSM_EXIT_CODE=$?
+    if [ $RHSM_EXIT_CODE -ne 0 ]; then
+        echo "ERROR: subscription-manager register failed"
+        exit 1
+    fi
+    echo "RHSM registration successful"
+else
+    echo "RHSM credentials not provided, skipping subscription-manager registration"
+fi
+set -x
 
-# 2. Simulate podman login for the ai-services tool
-echo "Setting up Podman authentication..."
-mkdir -p $XDG_RUNTIME_DIR/containers
-cp /etc/pim/auth.json $XDG_RUNTIME_DIR/containers/auth.json
+# Workaround: Manually generate the missing smt.state file required by the smtstate service.
+# This ensures the state file exists with some SMT level set before the bootstrap process begins.
+echo "Set SMT level before invoking bootstrap command"
+mkdir -p /var/lib/powerpc-utils
+echo "SMT_VALUE=2" | sudo tee /var/lib/powerpc-utils/smt.state
 
 # Bootstrap AI Services with Podman runtime
 echo "Bootstrapping AI Services..."
@@ -82,6 +102,14 @@ if [ $BOOTSTRAP_EXIT_CODE -ne 0 ]; then
     # exit $BOOTSTRAP_EXIT_CODE
 fi
 echo "Bootstrap completed"
+
+# Explicitly export XDG_RUNTIME_DIR for the systemd environment
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+
+# Simulate podman login for the ai-services tool
+echo "Setting up Podman authentication..."
+mkdir -p $XDG_RUNTIME_DIR/containers
+cp /etc/pim/auth.json $XDG_RUNTIME_DIR/containers/auth.json
 
 # Configure AI Services Catalog
 echo "Configuring AI Services Catalog..."
@@ -135,4 +163,9 @@ echo "=== AI Services Setup Completed ==="
 
 echo "Checking catalog info"
 "$AIS_PATH" catalog info --runtime podman
+
+# The ai-services CLI fails when run as the 'pim' user because it was configured by root.
+# To resolve this, we create an alias that uses sudo and explicitly targets the system-wide Podman socket.
+echo "Configuring ai-services alias to use the root Podman socket..."
+echo "alias ai-services='sudo CONTAINER_HOST=unix:///run/podman/podman.sock /tmp/ai-services'" >> /var/home/pim/.bashrc
 # Made with Bob

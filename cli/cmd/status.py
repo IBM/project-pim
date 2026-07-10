@@ -57,7 +57,7 @@ def _status(config, cookies, sys_uuid):
             return
 
         logger.info("Validate AI application launched via PIM")
-        logger.debug(f"Validation request details\n Method: {util.get_ai_app_method(config)}\n URL: {util.get_ai_app_url(config)}\n Payload: {util.get_ai_app_payload(config)}")
+        logger.debug(f"Validation request details\n Method: {util.get_ai_app_method(config)}\n URL: {util.get_ai_app_url(config)}\n Payload: {util.get_ai_app_payload(config)}\n Verify SSL: {util.get_ai_app_verify_ssl(config)}")
         up, msg = app.check_app(config)
         if not up:
             logger.error(f"AI application is not responding, message: {msg}")

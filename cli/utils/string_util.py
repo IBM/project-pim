@@ -153,3 +153,6 @@ def get_ai_app_headers(config):
 
 def get_ai_app_payload(config):
     return config["ai"]["validation"]["payload"]
+
+def get_ai_app_verify_ssl(config) :
+    return config["ai"]["validation"].as_bool("verify-ssl")

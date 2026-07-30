@@ -62,7 +62,7 @@ def monitor_pim(config):
     # Validate the AI application deployed via PIM partition with the request details provided in 'ai.validation'
     logger.info("Validate AI application launched via PIM")
     logger.debug(
-        f"Validation request details\n Method: {get_ai_app_method(config)}\n URL: {get_ai_app_url(config)}\n Payload: {get_ai_app_payload(config)}")
+        f"Validation request details\n Method: {get_ai_app_method(config)}\n URL: {get_ai_app_url(config)}\n Payload: {get_ai_app_payload(config)}\n Verify SSL: {get_ai_app_verify_ssl(config)}")
     err = ""
     for i in range(50):
         up, msg = app.check_app(config)

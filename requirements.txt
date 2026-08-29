@@ -12,7 +12,7 @@ jinja2==3.1.6
 lxml==6.1.0
 markupsafe==3.0.2
 paramiko==3.5.1
-pycparser==2.22
+pycparser==2.23
 pynacl>=1.6.2
 requests==2.33.0
 six==1.17.0

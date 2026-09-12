@@ -1,5 +1,5 @@
 # Versions pointing to the pkg versions available in Linux
-bcrypt==4.3.0
+bcrypt==5.0.0
 beautifulsoup4==4.13.4
 bs4==0.0.2
 certifi==2025.6.15

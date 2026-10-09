@@ -6,7 +6,7 @@ certifi==2025.6.15
 cffi>=1.17.1
 charset-normalizer==3.4.2
 configobj==5.0.9
-cryptography>=46.0.7
+cryptography>=50.0.0
 idna==3.10
 jinja2==3.1.6
 lxml==6.1.0
@@ -16,6 +16,6 @@ pycparser==2.22
 pynacl>=1.6.2
 requests==2.33.0
 six==1.17.0
-soupsieve==2.7
+soupsieve==2.9.2
 typing-extensions==4.14.0
-urllib3==2.6.3
+urllib3==2.8.0

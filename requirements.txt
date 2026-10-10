@@ -17,5 +17,5 @@ pynacl>=1.6.2
 requests==2.33.0
 six==1.17.0
 soupsieve==2.7
-typing-extensions==4.14.0
+typing-extensions==4.16.0
 urllib3==2.6.3

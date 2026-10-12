@@ -175,8 +175,8 @@ def initialize_config(config_file_path):
 
 
 def check_if_keys_generated(config):
-    priv_key = f"{keys_path}/{util.get_partition_name(config)}_pim"
-    pub_key = f"{keys_path}/{util.get_partition_name(config)}_pim.pub"
+    priv_key = f"{keys_path}/{util.get_partition_name(config).lower()}_pim"
+    pub_key = f"{keys_path}/{util.get_partition_name(config).lower()}_pim.pub"
     if os.path.isfile(priv_key) and os.path.isfile(pub_key):
         return True
     return False

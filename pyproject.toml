@@ -5,7 +5,7 @@ description = "Power Inferencing Microservices Cli"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-"bcrypt==4.3.0",
+"bcrypt==5.0.0",
 "beautifulsoup4==4.13.4",
 "bs4==0.0.2",
 "certifi==2025.6.15",

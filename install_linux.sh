@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dnf install -y python3-pip libxml2-devel libxslt-devel python-devel libffi-devel mkisofs
+dnf install -y python3-pip libxml2-devel libxslt-devel python-devel libffi-devel
 dnf groupinstall -y "Development Tools"
 
 # Install ISO creation tool
@@ -19,7 +19,7 @@ pip install uv
 # Clone source code from github repo
 curl "https://codeload.github.com/IBM/project-pim/zip/refs/heads/main" --output pim.zip
 unzip pim.zip
-cd project-pim-main
+cd project-pim-fix-cve-issue-70
 export PYTHONPATH=.
 
 uv venv

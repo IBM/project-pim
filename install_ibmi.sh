@@ -38,6 +38,12 @@ python3.13 -m venv --system-site-packages $HOME/pim-venv
 $HOME/pim-venv/bin/pip install --upgrade pip
 
 # Set GCC 10 as the compiler for building lxml (required for Python 3.13)
+# Python's linker helper (ld_so_aix) calls a plain 'gcc', but gcc10 only installs 'gcc-10',
+# so expose it under the expected names
+mkdir -p $HOME/gccbin
+ln -sf /QOpenSys/pkgs/bin/gcc-10 $HOME/gccbin/gcc
+ln -sf /QOpenSys/pkgs/bin/g++-10 $HOME/gccbin/g++
+export PATH=$HOME/gccbin:$PATH
 export CC=/QOpenSys/pkgs/bin/gcc-10
 export CXX=/QOpenSys/pkgs/bin/g++-10
 
@@ -60,15 +66,15 @@ $HOME/pim-venv/bin/pip install lxml==6.1.0 --no-cache-dir
 $HOME/pim-venv/bin/pip install --no-cache-dir --no-deps \
     bs4 \
     beautifulsoup4 \
-    urllib3 \
+    urllib3==2.8.0 \
     configobj \
-    requests \
+    requests==2.33.0 \
     certifi \
     charset-normalizer \
     idna \
     Jinja2 \
     MarkupSafe \
-    soupsieve \
+    soupsieve==2.9.2 \
     typing-extensions \
     pycparser \
     pynacl
@@ -85,5 +91,5 @@ cd source
 # Clone source code from github repo
 curl "https://codeload.github.com/IBM/project-pim/zip/refs/heads/main" --output pim.zip
 unzip pim.zip
-cd project-pim-main
+cd main
 export PYTHONPATH=.

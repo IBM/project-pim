@@ -22,7 +22,7 @@ dependencies = [
 "pynacl>=1.6.2",
 "requests==2.33.0",
 "six==1.17.0",
-"soupsieve==2.9.2",
+"soupsieve==3.0.4",
 "typing-extensions==4.14.0",
 "urllib3==2.8.0"
 ]
